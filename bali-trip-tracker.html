@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bali Trip 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f3;--card:#fff;--primary:#0d9488;--primary-light:#ccfbf1;
+  --accent:#f97316;--accent-light:#fff7ed;
+  --fam-a:#3b82f6;--fam-b:#8b5cf6;
+  --text:#1e293b;--muted:#64748b;--border:#e2e8f0;
+  --danger:#ef4444;--success:#22c55e;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;
+  padding-bottom:70px;min-height:100vh;-webkit-tap-highlight-color:transparent}
+header{background:linear-gradient(135deg,#0d9488,#0891b2);color:#fff;
+  padding:16px 20px 14px;position:sticky;top:0;z-index:10}
+header h1{font-size:1.2rem;font-weight:700}
+header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
+.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;
+  display:flex;border-top:1px solid var(--border);z-index:10;
+  max-width:480px;margin:0 auto}
+.tabs button{flex:1;border:none;background:none;padding:10px 4px 8px;
+  font-size:.65rem;color:var(--muted);display:flex;flex-direction:column;
+  align-items:center;gap:3px;cursor:pointer;font-weight:600}
+.tabs button.active{color:var(--primary)}
+.tabs button svg{width:22px;height:22px}
+.tab-content{display:none;padding:16px}
+.tab-content.active{display:block}
+.card{background:var(--card);border-radius:var(--radius);padding:14px 16px;
+  margin-bottom:10px;box-shadow:var(--shadow)}
+.card h3{font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px}
+.settle-box{text-align:center;padding:20px;font-size:1.1rem;font-weight:700;
+  background:var(--primary-light);border-radius:var(--radius)}
+.chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600}
+.chip-a{background:#dbeafe;color:var(--fam-a)}
+.chip-b{background:#ede9fe;color:var(--fam-b)}
+.chip-cat{background:var(--primary-light);color:var(--primary)}
+/* Spreadsheet table */
+.sheet{width:100%;border-collapse:collapse;font-size:.82rem}
+.sheet th{text-align:right;padding:8px 6px;font-weight:700;font-size:.75rem;
+  color:var(--muted);border-bottom:2px solid var(--primary);text-transform:uppercase}
+.sheet th:first-child{text-align:left}
+.sheet td{padding:8px 6px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+.sheet td:first-child{font-weight:500;font-size:.85rem}
+.sheet td.n{text-align:right;font-weight:600}
+.sheet td.n.a{color:var(--fam-a)}
+.sheet td.n.b{color:var(--fam-b)}
+.sheet td.n.t{color:var(--text);font-weight:700}
+.sheet tr.total-row td{border-top:2px solid var(--primary);border-bottom:none;font-weight:700;font-size:.9rem}
+.sheet tr.section td{background:var(--bg);font-weight:700;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;padding:10px 6px 4px}
+.sheet tr.empty td.n{color:var(--border)}
+.sheet tr.clickable{cursor:pointer}
+.sheet tr.clickable:active{background:var(--primary-light)}
+/* Form */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px;
+  border:1.5px solid var(--border);border-radius:10px;font-size:1rem;
+  background:#fff;appearance:none;-webkit-appearance:none}
+.form-group select{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24'%3E%3Cpath fill='%2364748b' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") no-repeat right 12px center #fff;padding-right:32px}
+.radio-row{display:flex;gap:8px}
+.radio-row label{flex:1;text-align:center;padding:10px;border:1.5px solid var(--border);
+  border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--muted)}
+.radio-row input{display:none}
+.radio-row input:checked+label{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.currency-toggle{display:flex;background:var(--border);border-radius:8px;overflow:hidden;width:fit-content}
+.currency-toggle button{border:none;padding:8px 16px;font-size:.85rem;font-weight:600;
+  background:transparent;color:var(--muted);cursor:pointer}
+.currency-toggle button.active{background:var(--primary);color:#fff}
+.converted{font-size:.8rem;color:var(--muted);margin-top:4px}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:1rem;
+  font-weight:700;cursor:pointer;color:#fff;background:var(--primary)}
+.btn:active{opacity:.8}
+/* Day view */
+.day-nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch}
+.day-nav button{flex-shrink:0;border:1.5px solid var(--border);background:#fff;
+  border-radius:10px;padding:8px 12px;font-size:.75rem;font-weight:600;
+  cursor:pointer;color:var(--muted);min-width:52px;text-align:center}
+.day-nav button.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.day-nav button .dn{font-size:.65rem;opacity:.7}
+.itin-item{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border)}
+.itin-item:last-child{border-bottom:none}
+.itin-item .name{font-size:.9rem;font-weight:500}
+.itin-item .cost{font-size:.85rem;font-weight:600;color:var(--primary);white-space:nowrap}
+.itin-item.optional .name::before{content:'⟡ ';font-size:.7rem}
+.expense-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.expense-item:last-child{border-bottom:none}
+.expense-item .row{display:flex;justify-content:space-between;align-items:center}
+.expense-item .desc{font-size:.9rem;font-weight:500}
+.expense-item .amt{font-size:.9rem;font-weight:700;font-variant-numeric:tabular-nums}
+.expense-item .meta{font-size:.75rem;color:var(--muted);margin-top:3px;display:flex;gap:6px;align-items:center}
+.del-btn{background:none;border:none;color:var(--danger);font-size:.75rem;font-weight:600;cursor:pointer;padding:2px 6px}
+.empty{text-align:center;padding:30px;color:var(--muted);font-size:.9rem}
+.export-btn{margin-top:12px;padding:10px;border:1.5px solid var(--primary);
+  border-radius:10px;background:transparent;color:var(--primary);
+  font-weight:600;font-size:.85rem;width:100%;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bali Trip 2026</h1>
+  <div class="settle-bar" id="headerSettle"></div>
+</header>
+
+<div id="tab-dashboard" class="tab-content active"></div>
+<div id="tab-add" class="tab-content"></div>
+<div id="tab-days" class="tab-content"></div>
+<div id="tab-settle" class="tab-content"></div>
+
+<nav class="tabs">
+  <button data-tab="dashboard" class="active" onclick="switchTab('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Home
+  </button>
+  <button data-tab="add" onclick="switchTab('add')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Add
+  </button>
+  <button data-tab="days" onclick="switchTab('days')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Days
+  </button>
+  <button data-tab="settle" onclick="switchTab('settle')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Settle
+  </button>
+</nav>
+
+<script>
+// ===== CONSTANTS =====
+const XR = 182; // IDR per INR
+const FAM = {A:{adults:2,kids:1,pax:3,name:'Senthil'},B:{adults:2,kids:2,pax:4,name:'Bala'}};
+const DATES = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05'];
+const DAY_LABELS = ['Day 1 — Arrival','Day 2 — Ubud Centre + Waterfalls','Day 3 — Alas Harum Loop','Day 4 — Flex Day','Day 5 — North/West Loop','Day 6 — Rafting + Chill','Day 7 — Transfer + South Bali','Day 8 — Waterbom','Day 9 — Departure'];
+
+const DAY_ITIN = [
+  {title:'Sun 27 Apr — ARRIVAL', driver:false, items:[
+    '8 PM — Arrive Ngurah Rai Airport',
+    'Drive to Ubud (~1.5 hrs)',
+    'Check in & rest',
+  ]},
+  {title:'Mon 28 Apr — UBUD CENTRE + WATERFALLS (Medium)', driver:true, items:[
+    'Ubud Palace (free)',
+    'Ubud Art Market (free)',
+    'Saraswati Temple',
+    'Kanto Lampo Waterfall',
+    'Tibumana Waterfall',
+    'OPTIONAL: Tirta Empul (if time)',
+  ]},
+  {title:'Tue 29 Apr — ALAS HARUM LOOP (Heavy)', driver:true, items:[
+    'Alas Harum (rice terraces + swings)',
+    'OPTIONAL: Kintamani Viewpoint',
+    'Penglipuran Village',
+    'Back to Champaca',
+  ]},
+  {title:'Wed 30 Apr — EAST BALI (Flex)', driver:true, items:[
+    'Lahangan Sweet',
+    'Tirta Gangga',
+    'Bukit Cinta (free)',
+  ]},
+  {title:'Thu 1 May — NORTH/WEST LOOP (Heavy)', driver:true, items:[
+    'Sangeh Monkey Forest',
+    'Ulun Danu Beratan Temple',
+    'Handara Gate (photo stop)',
+    'Wanagiri Hidden Hill (viewpoint)',
+    'Jatiluwih Rice Terraces',
+  ]},
+  {title:'Fri 2 May — RAFTING + CHILL (Medium)', driver:false, items:[
+    'Morning: Ayung River Rafting (pickup + lunch included)',
+    'Afternoon: Chill, pool',
+    'Evening: Pack for Kuta move',
+  ]},
+  {title:'Sat 3 May — TRANSFER + SOUTH BALI (Heavy)', driver:true, items:[
+    'Checkout Ubud → Kuta check in',
+    'Padang Padang Beach',
+    'Uluwatu Temple',
+    'Kecak Fire Dance',
+    'Jimbaran dinner',
+  ]},
+  {title:'Sun 4 May — WATERBOM (Medium)', driver:false, items:[
+    'Waterbom full day',
+    'No outside food allowed (food tracked separately)',
+    'OPTIONAL: Swap for Nusa Penida day trip',
+  ]},
+  {title:'Mon 5 May — DEPARTURE', driver:false, items:[
+    'Morning: Free time',
+    'Airport by 7 PM',
+    'Flight AK 375, 10:15 PM',
+  ]},
+];
+
+// Expense rows matching the spreadsheet layout
+// split: 'own' = each family's own, '50-50' = shared equally
+// split: 'own' = individual, '50-50' = equal, '4:3' = by headcount (Bala 4, Senthil 3)
+const ROWS = [
+  {key:'flight',      label:'Flight',             split:'own',  fixed:true},
+  {key:'visa',        label:'Visa',               split:'own',  fixed:true},
+  {key:'ubud_hotel',  label:'Ubud Hotel',          split:'50-50'},
+  {key:'kuta_hotel',  label:'Kuta Hotel',          split:'50-50'},
+  {key:'airport1',    label:'Airport Transfer 1',  split:'50-50'},
+  {key:'airport2',    label:'Airport Transfer 2',  split:'50-50'},
+  {key:'driver',      label:'Driver',              split:'50-50'},
+  {key:'food',        label:'Food',                split:'50-50'},
+  {key:'waterbom_food',label:'Waterbom Food',      split:'50-50'},
+  {key:'rafting',     label:'Rafting',             split:'4:3'},
+  {key:'alas_harum',  label:'Alas Harum',          split:'4:3'},
+  {key:'waterbom',    label:'Waterbom',            split:'4:3'},
+  {key:'entrance',    label:'Entrance tickets',    split:'4:3'},
+  {key:'misc',        label:'Misc',                split:'50-50'},
+  {key:'activity1',   label:'Activity 1',          split:'50-50'},
+  {key:'activity2',   label:'Activity 2',          split:'50-50'},
+  {key:'activity3',   label:'Activity 3',          split:'50-50'},
+];
+
+function rowLabel(key){ return (state.rowLabels && state.rowLabels[key]) || allRows().find(r=>r.key===key)?.label || key; }
+function splitLabel(s){ return s==='own'?'Individual':s==='4:3'?'4:3 (by pax)':s==='per-person'?'Per person':'50-50'; }
+function splitRatio(s){ return s==='4:3'?{A:3,B:4,T:7}:{A:1,B:1,T:2}; }
+function getRowSplit(key){
+  return (state && state.splitOverrides && state.splitOverrides[key]) || allRows().find(r=>r.key===key)?.split || '50-50';
+}
+
+// Merge default rows + custom rows from state
+function allRows(){
+  const custom = (state && state.customRows) || [];
+  return [...ROWS, ...custom];
+}
+
+// Pre-loaded itinerary for day view
+const ITINERARY = [
+  { day:1, items:[] },
+  { day:2, items:[
+    {name:'Saraswati Temple',cat:'activity',idr:36400,perType:'all',rowKey:'entrance'},
+    {name:'Kanto Lampo',cat:'activity',idr:20020,perType:'all',rowKey:'entrance'},
+    {name:'Tibumana',cat:'activity',idr:20020,perType:'all',rowKey:'entrance'},
+    {name:'Tirta Empul',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+  ]},
+  { day:3, items:[
+    {name:'Alas Harum Entry',cat:'activity',idr:50050,perType:'all',rowKey:'alas_harum'},
+    {name:'Alas Harum Swings',cat:'activity',idr:200200,perType:'all',rowKey:'alas_harum'},
+    {name:'Penglipuran (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
+    {name:'Penglipuran (Kid)',cat:'activity',idr:30030,perType:'kid',rowKey:'entrance'},
+    {name:'Kintamani',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+  ]},
+  { day:4, items:[
+    {name:'Lahangan Sweet',cat:'activity',idr:40040,perType:'all',rowKey:'entrance'},
+    {name:'Tirta Gangga',cat:'activity',idr:70070,perType:'all',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+  ]},
+  { day:5, items:[
+    {name:'Sangeh Monkey Forest (Adult)',cat:'activity',idr:75166,perType:'adult',rowKey:'entrance'},
+    {name:'Sangeh Monkey Forest (Kid)',cat:'activity',idr:50050,perType:'kid',rowKey:'entrance'},
+    {name:'Ulun Danu Beratan (Adult)',cat:'activity',idr:75166,perType:'adult',rowKey:'entrance'},
+    {name:'Ulun Danu Beratan (Kid)',cat:'activity',idr:50050,perType:'kid',rowKey:'entrance'},
+    {name:'Handara Gate',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
+    {name:'Wanagiri Hidden Hill',cat:'activity',idr:100100,perType:'all',rowKey:'entrance'},
+    {name:'Jatiluwih (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
+    {name:'Jatiluwih (Kid)',cat:'activity',idr:30030,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+  ]},
+  { day:6, items:[
+    {name:'Ayung Rafting',cat:'activity',idr:680680,perType:'all',rowKey:'rafting'},
+  ]},
+  { day:7, items:[
+    {name:'Padang Padang Beach',cat:'activity',idr:10010,perType:'all',rowKey:'entrance'},
+    {name:'Uluwatu Temple (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
+    {name:'Uluwatu Temple (Kid)',cat:'activity',idr:25116,perType:'kid',rowKey:'entrance'},
+    {name:'Kecak Fire Dance (Adult)',cat:'activity',idr:150150,perType:'adult',rowKey:'entrance'},
+    {name:'Kecak Fire Dance (Kid)',cat:'activity',idr:100100,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+  ]},
+  { day:8, items:[
+    {name:'Waterbom (Adult)',cat:'activity',idr:522522,perType:'adult',rowKey:'waterbom'},
+    {name:'Waterbom (Kid)',cat:'activity',idr:387478,perType:'kid',rowKey:'waterbom'},
+  ]},
+  { day:9, items:[] },
+];
+
+// Pre-seeded estimated data
+const SEED_DATA = {
+  flight:       {A:93087,  B:124116},  // actual paid
+  visa:         {A:8523,   B:11364},   // actual paid
+  ubud_hotel:   {A:52500,  B:52500},   // ₹1,05,000 total (Champaca 6 nights)
+  kuta_hotel:   {A:12500,  B:12500},   // ₹25,000 total (2 nights + late checkout)
+  airport1:     {A:3250,   B:3250},    // arrival transfer
+  airport2:     {A:3250,   B:3250},    // departure transfer
+  driver:       {A:10500,  B:10500},   // 5 days × ₹4,200/day
+  food:         {A:29250,  B:29250},   // 9 days × ₹6,500/day
+  waterbom_food:{A:2750,   B:2750},    // Waterbom food (no outside food)
+  rafting:      {A:11220,  B:14960},   // Ayung rafting ₹3,740pp
+  alas_harum:   {A:4125,   B:5500},    // entry ₹275pp + swings ₹1,100pp
+  waterbom:     {A:7871,   B:10000},   // adult ₹2,871 + kid ₹2,129
+  entrance:     {A:13885,  B:17908},   // all entrance fees incl Tirta Empul, Kintamani, East Bali
+  misc:         {A:7500,   B:7500},    // sim cards, sunscreen, tips, Grab
+};
+
+// ===== STATE =====
+// Rows that are booked/paid — same in Budget & Actual views
+const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','airport1','airport2','driver'];
+
+const STORE_KEY = 'bali_trip_2026_v8';
+let state = loadState();
+let currentDay = 0;
+let addCurrency = 'INR';
+let viewMode = 'budget'; // 'budget' or 'actual'
+
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if(s && s.version === 8){
+      if(!s.customRows) s.customRows = [];
+      if(!s.payments) s.payments = [];
+      if(!s.splitOverrides) s.splitOverrides = {};
+      if(!s.rowLabels) s.rowLabels = {};
+      return s;
+    }
+  }catch(e){}
+  // Initialize with pre-seeded estimates
+  const data = {};
+  ROWS.forEach(r => { data[r.key] = SEED_DATA[r.key] ? {...SEED_DATA[r.key]} : {A:0, B:0}; });
+  return {version:8, data, expenses:[], toggledOff:[], customRows:[], splitOverrides:{}, rowLabels:{}, payments:[
+    {id:1, amount:80000, date:'Pre-trip', note:'Advance payment'}
+  ]};
+}
+function save(){ state.lastUpdated = new Date().toISOString(); localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ===== HELPERS =====
+const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
+const idrF = v => 'IDR ' + Math.round(v).toLocaleString('en-ID');
+const toINR = idr => idr / XR;
+
+// Get actual spend from logged expenses (variable rows only)
+function getActualRowData(){
+  const actual = {};
+  allRows().forEach(r=>{
+    if(BOOKED_ROWS.includes(r.key)){
+      actual[r.key] = SEED_DATA[r.key] ? {...SEED_DATA[r.key]} : {A:0,B:0};
+    } else {
+      const rowExp = state.expenses.filter(e=>e.cat===r.key);
+      const total = rowExp.reduce((s,e)=>s+e.amount, 0);
+      if(total===0){ actual[r.key]={A:0,B:0}; }
+      else {
+        const sp = getRowSplit(r.key);
+        if(sp==='own'){
+          actual[r.key]={A:rowExp.filter(e=>e.paidBy==='A').reduce((s,e)=>s+e.amount,0),
+                         B:rowExp.filter(e=>e.paidBy==='B').reduce((s,e)=>s+e.amount,0)};
+        } else {
+          const rat = splitRatio(sp);
+          const aShare = Math.round(total * rat.A / rat.T);
+          actual[r.key] = {A:aShare, B:total-aShare};
+        }
+      }
+    }
+  });
+  return actual;
+}
+
+function getDisplayData(){
+  return viewMode==='actual' ? getActualRowData() : null; // null = use state.data
+}
+
+function getRowTotals(data){
+  let sA=0, sB=0, sT=0;
+  allRows().forEach(r=>{
+    const src = data ? (data[r.key]||{}) : (state.data[r.key]||{});
+    const a = src.A || 0;
+    const b = src.B || 0;
+    sA += a; sB += b; sT += a+b;
+  });
+  return {sA,sB,sT};
+}
+
+function getSettlement(data){
+  const {sA,sB,sT} = getRowTotals(data);
+  const balaReceived = (state.payments || []).reduce((s,p)=>s+p.amount, 0);
+  return {sA, sB, sT, balaShare:sB, balaReceived, balaOwes: sB - balaReceived};
+}
+
+// ===== RENDERING =====
+function switchTab(tab){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tabs button').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelector(`.tabs button[data-tab="${tab}"]`).classList.add('active');
+  if(tab==='dashboard') renderDashboard();
+  if(tab==='add') renderAdd();
+  if(tab==='days') renderDays();
+  if(tab==='settle') renderSettle();
+}
+
+function updateHeader(){
+  const s = getSettlement();
+  const el = document.getElementById('headerSettle');
+  if(s.sT===0){ el.textContent='No expenses yet'; return; }
+  if(Math.abs(s.balaOwes)<1){ el.textContent='All settled up!'; return; }
+  if(s.balaOwes>0) el.textContent=`Bala owes you ${inr(s.balaOwes)}`;
+  else el.textContent=`You owe Bala ${inr(-s.balaOwes)}`;
+}
+
+function setView(mode){ viewMode=mode; renderDashboard(); }
+
+function renderDashboard(){
+  updateHeader();
+  const displayData = getDisplayData();
+  const {sA,sB,sT} = getRowTotals(displayData);
+  const s = getSettlement(displayData);
+  const isActual = viewMode==='actual';
+
+  let tableRows = '';
+  const rows = allRows();
+  rows.forEach(r=>{
+    const src = displayData ? (displayData[r.key]||{}) : (state.data[r.key]||{});
+    const a = src.A || 0;
+    const b = src.B || 0;
+    const t = a+b;
+    const isEmpty = t===0;
+    const isCustom = !ROWS.find(x=>x.key===r.key);
+    const isBooked = BOOKED_ROWS.includes(r.key);
+    tableRows += `
+      <tr class="${isEmpty?'empty':''} clickable" onclick="${isActual&&!isBooked?'':'editRow(\''+r.key+'\')'}">
+        <td>${rowLabel(r.key)}${isCustom?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">✕</span>':''}</td>
+        <td class="n a">${a?a.toLocaleString('en-IN'):''}</td>
+        <td class="n b">${b?b.toLocaleString('en-IN'):''}</td>
+        <td class="n t">${t?t.toLocaleString('en-IN'):''}</td>
+      </tr>`;
+  });
+
+  document.getElementById('tab-dashboard').innerHTML = `
+    <div class="currency-toggle" style="margin-bottom:12px;width:100%">
+      <button style="flex:1" class="${!isActual?'active':''}" onclick="setView('budget')">Budget</button>
+      <button style="flex:1" class="${isActual?'active':''}" onclick="setView('actual')">Actual</button>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table class="sheet">
+        <tr>
+          <th style="text-align:left">Expense</th>
+          <th>Senthil</th>
+          <th>Bala</th>
+          <th>Total</th>
+        </tr>
+        ${tableRows}
+        <tr class="total-row">
+          <td>Total</td>
+          <td class="n a">${sA?sA.toLocaleString('en-IN'):0}</td>
+          <td class="n b">${sB?sB.toLocaleString('en-IN'):0}</td>
+          <td class="n t">${sT?sT.toLocaleString('en-IN'):0}</td>
+        </tr>
+      </table>
+    </div>
+    <button onclick="showAddRow()" style="width:100%;padding:12px;border:1.5px dashed var(--primary);border-radius:10px;background:transparent;color:var(--primary);font-weight:600;font-size:.9rem;cursor:pointer;margin-bottom:10px">+ Add Row</button>
+    <div class="card">
+      <h3>Payments from Bala</h3>
+      ${(state.payments||[]).length===0?'<div style="font-size:.85rem;color:var(--muted);padding:4px 0">No payments received yet</div>':''}
+      ${(state.payments||[]).map(p=>`
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:.9rem;font-weight:500">${inr(p.amount)}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${p.date}${p.note?' — '+p.note:''}</div>
+          </div>
+          <button class="del-btn" onclick="delPayment(${p.id})">Delete</button>
+        </div>`).join('')}
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <input id="pay-amt" type="number" inputmode="numeric" placeholder="Amount ₹" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+        <button onclick="addPayment()" style="padding:10px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;font-size:.9rem;cursor:pointer">Add</button>
+      </div>
+    </div>
+    <div class="settle-box">
+      ${sT===0?'Add expenses to see settlement':
+        Math.abs(s.balaOwes)<1?'All settled up!':
+        s.balaOwes>0?`Bala still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Bala <strong>${inr(-s.balaOwes)}</strong>`}
+      ${s.balaShare>0?`<div style="font-size:.8rem;font-weight:400;margin-top:6px">Bala's share: ${inr(s.balaShare)} · Received: ${inr(s.balaReceived)}</div>`:''}
+    </div>
+    <div style="text-align:center;margin-top:12px;font-size:.75rem;color:var(--muted)">Tap any row to edit</div>
+  `;
+}
+
+// Quick edit for a row
+let editingRow = null;
+
+function editRow(key){
+  editingRow = key;
+  const row = allRows().find(r=>r.key===key);
+  const d = state.data[key] || {A:0,B:0};
+  const a = d.A || '';
+  const b = d.B || '';
+  const isCustom = !ROWS.find(x=>x.key===key);
+
+  const sp = getRowSplit(key);
+  const isOwn = sp === 'own';
+  const total = (a||0) + (b||0);
+
+  document.getElementById('tab-dashboard').innerHTML += `
+    <div id="editModal" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeEdit()">
+      <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px 30px;width:100%;max-width:480px">
+        <h3 style="font-size:1rem;margin-bottom:4px">${rowLabel(key)} <span class="chip chip-cat">${splitLabel(sp)}</span></h3>
+        ${!row.fixed?`
+          <div class="form-group">
+            <label>Name</label>
+            <input id="edit-name" type="text" value="${rowLabel(key)}" placeholder="Row name" style="font-size:1rem">
+          </div>
+        `:''}
+        ${isOwn?`
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">Each family's own cost</p>
+          <div class="form-group">
+            <label>Senthil (₹)</label>
+            <input id="edit-a" type="number" inputmode="numeric" value="${a}" placeholder="0" style="font-size:1.1rem">
+          </div>
+          <div class="form-group">
+            <label>Bala (₹)</label>
+            <input id="edit-b" type="number" inputmode="numeric" value="${b}" placeholder="0" style="font-size:1.1rem">
+          </div>
+        `:`
+          <div class="form-group">
+            <label>Split Type</label>
+            <div class="radio-row">
+              <div><input type="radio" name="editSplit" id="es-fifty" value="50-50" ${sp==='50-50'?'checked':''} onchange="showSplitPreview()"><label for="es-fifty">50-50</label></div>
+              <div><input type="radio" name="editSplit" id="es-pax" value="4:3" ${sp==='4:3'?'checked':''} onchange="showSplitPreview()"><label for="es-pax">4:3 (by pax)</label></div>
+              <div><input type="radio" name="editSplit" id="es-pp" value="per-person" onchange="showSplitPreview()"><label for="es-pp">Per person</label></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Total Amount (₹)</label>
+            <input id="edit-total" type="number" inputmode="numeric" value="${total||''}" placeholder="0" style="font-size:1.1rem" oninput="showSplitPreview()">
+          </div>
+          <div id="splitPreview" style="font-size:.85rem;color:var(--muted);margin-bottom:14px"></div>
+        `}
+        <button class="btn" onclick="saveEdit(${!isOwn})">Save</button>
+        ${isCustom?`<button style="width:100%;padding:12px;border:none;background:none;color:var(--danger);font-weight:600;margin-top:8px;cursor:pointer" onclick="deleteRow('${key}')">Delete Row</button>`:''}
+        <button style="width:100%;padding:12px;border:none;background:none;color:var(--muted);font-weight:600;margin-top:4px;cursor:pointer" onclick="closeEdit()">Cancel</button>
+      </div>
+    </div>
+  `;
+  if(!isOwn) showSplitPreview();
+  setTimeout(()=>document.getElementById(isOwn?'edit-a':'edit-total').focus(),100);
+}
+
+function showAddRow(){
+  document.getElementById('tab-dashboard').innerHTML += `
+    <div id="editModal" style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:20;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeEdit()">
+      <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px 30px;width:100%;max-width:480px">
+        <h3 style="font-size:1rem;margin-bottom:16px">Add New Row</h3>
+        <div class="form-group">
+          <label>Name</label>
+          <input id="new-name" type="text" placeholder="e.g. Snorkeling, Tips, Spa" style="font-size:1.1rem">
+        </div>
+        <div class="form-group">
+          <label>Split Type</label>
+          <div class="radio-row">
+            <div><input type="radio" name="newSplit" id="ns-shared" value="50-50" checked><label for="ns-shared">50-50</label></div>
+            <div><input type="radio" name="newSplit" id="ns-pax" value="4:3"><label for="ns-pax">4:3</label></div>
+            <div><input type="radio" name="newSplit" id="ns-own" value="own"><label for="ns-own">Own</label></div>
+          </div>
+        </div>
+        <button class="btn" onclick="addNewRow()">Add Row</button>
+        <button style="width:100%;padding:12px;border:none;background:none;color:var(--muted);font-weight:600;margin-top:8px;cursor:pointer" onclick="closeEdit()">Cancel</button>
+      </div>
+    </div>
+  `;
+  setTimeout(()=>document.getElementById('new-name').focus(),100);
+}
+
+function addNewRow(){
+  const name = document.getElementById('new-name').value.trim();
+  if(!name){ alert('Enter a name'); return; }
+  const split = document.querySelector('input[name="newSplit"]:checked').value;
+  const key = 'custom_' + Date.now();
+  state.customRows.push({key, label:name, split});
+  state.data[key] = {A:0, B:0};
+  save(); closeEdit(); renderDashboard();
+}
+
+function deleteRow(key){
+  if(!confirm('Delete this row?')) return;
+  state.customRows = state.customRows.filter(r=>r.key!==key);
+  delete state.data[key];
+  save(); closeEdit(); renderDashboard();
+}
+
+function addPayment(){
+  const amt = parseFloat(document.getElementById('pay-amt').value);
+  if(!amt){ alert('Enter an amount'); return; }
+  state.payments.push({
+    id: Date.now(),
+    amount: Math.round(amt),
+    date: new Date().toLocaleDateString('en-IN'),
+    note: ''
+  });
+  save(); renderDashboard();
+}
+
+function delPayment(id){
+  if(!confirm('Delete this payment?')) return;
+  state.payments = state.payments.filter(p=>p.id!==id);
+  save(); renderDashboard();
+}
+
+function saveEdit(isShared){
+  // Save rename if name field exists
+  const nameEl = document.getElementById('edit-name');
+  if(nameEl){
+    const newName = nameEl.value.trim();
+    if(newName && newName !== allRows().find(r=>r.key===editingRow)?.label){
+      if(!state.rowLabels) state.rowLabels = {};
+      state.rowLabels[editingRow] = newName;
+    }
+  }
+  if(isShared){
+    const total = parseFloat(document.getElementById('edit-total').value) || 0;
+    const sp = document.querySelector('input[name="editSplit"]:checked').value;
+    // Save split override
+    if(!state.splitOverrides) state.splitOverrides = {};
+    state.splitOverrides[editingRow] = sp;
+    if(sp === 'per-person'){
+      // Per person: multiply by each family's headcount
+      const sA = Math.round(total * FAM.A.pax);
+      const sB = Math.round(total * FAM.B.pax);
+      state.data[editingRow] = {A: sA, B: sB};
+    } else {
+      const r = splitRatio(sp);
+      const aShare = Math.round(total * r.A / r.T);
+      state.data[editingRow] = {A: aShare, B: Math.round(total) - aShare};
+    }
+  } else {
+    const a = parseFloat(document.getElementById('edit-a').value) || 0;
+    const b = parseFloat(document.getElementById('edit-b').value) || 0;
+    state.data[editingRow] = {A:Math.round(a), B:Math.round(b)};
+  }
+  save();
+  closeEdit();
+  renderDashboard();
+}
+
+function showSplitPreview(){
+  const el = document.getElementById('splitPreview');
+  const totalEl = document.getElementById('edit-total');
+  const labelEl = totalEl?.previousElementSibling;
+  if(!el || !totalEl) return;
+  const v = parseFloat(totalEl.value) || 0;
+  const sp = document.querySelector('input[name="editSplit"]:checked')?.value || '50-50';
+  if(sp === 'per-person'){
+    if(labelEl) labelEl.textContent = 'Per Person Price (₹)';
+    if(v){
+      const sA = Math.round(v * FAM.A.pax);
+      const sB = Math.round(v * FAM.B.pax);
+      el.style.display='block';
+      el.innerHTML = `Senthil: ${inr(sA)} (${FAM.A.pax} pax) · Bala: ${inr(sB)} (${FAM.B.pax} pax)<br>Total: ${inr(sA+sB)}`;
+    } else { el.style.display='none'; }
+  } else {
+    if(labelEl) labelEl.textContent = 'Total Amount (₹)';
+    if(v){
+      const r = splitRatio(sp);
+      el.style.display='block';
+      el.textContent = `Senthil: ${inr(v * r.A / r.T)} · Bala: ${inr(v * r.B / r.T)}`;
+    } else { el.style.display='none'; }
+  }
+}
+
+function closeEdit(){
+  const m = document.getElementById('editModal');
+  if(m) m.remove();
+  editingRow = null;
+}
+
+function renderAdd(){
+  updateHeader();
+  const today = new Date().toISOString().slice(0,10);
+  const dateVal = DATES.includes(today)?today:DATES[0];
+  // Category dropdown built from ROWS
+  const catOpts = allRows().filter(r=>!r.fixed).map(r=>`<option value="${r.key}">${rowLabel(r.key)}</option>`).join('');
+
+  document.getElementById('tab-add').innerHTML = `
+    <div class="card">
+      <h3>Quick Add</h3>
+      <form id="addForm" onsubmit="return submitExpense(event)">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="f-cat">${catOpts}</select>
+        </div>
+        <div class="form-group">
+          <label>Amount</label>
+          <div class="currency-toggle" style="margin-bottom:8px">
+            <button type="button" class="${addCurrency==='INR'?'active':''}" onclick="setCur('INR')">INR ₹</button>
+            <button type="button" class="${addCurrency==='IDR'?'active':''}" onclick="setCur('IDR')">IDR</button>
+          </div>
+          <input id="f-amount" type="number" inputmode="numeric" placeholder="${addCurrency==='INR'?'e.g. 2500':'e.g. 450000'}" required>
+          <div class="converted" id="f-converted"></div>
+        </div>
+        <div class="form-group">
+          <label>Paid By</label>
+          <div class="radio-row">
+            <div><input type="radio" name="paidBy" id="pay-a" value="A" checked><label for="pay-a">Senthil</label></div>
+            <div><input type="radio" name="paidBy" id="pay-b" value="B"><label for="pay-b">Bala</label></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Note (optional)</label>
+          <input id="f-note" type="text" placeholder="e.g. Lunch at Warung Babi Guling">
+        </div>
+        <button type="submit" class="btn">Add to ${addCurrency==='INR'?'₹':'IDR'} Total</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Recent</h3>
+      <div id="recentList"></div>
+    </div>
+  `;
+  document.getElementById('f-amount').addEventListener('input', showConverted);
+  renderRecent();
+}
+
+function setCur(c){ addCurrency=c; renderAdd(); }
+
+function showConverted(){
+  const v = parseFloat(document.getElementById('f-amount').value);
+  const el = document.getElementById('f-converted');
+  if(!v||isNaN(v)){el.textContent='';return;}
+  if(addCurrency==='IDR') el.textContent = `= ${inr(v/XR)}`;
+  else el.textContent = `= ${idrF(v*XR)}`;
+}
+
+function submitExpense(e){
+  e.preventDefault();
+  const cat = document.getElementById('f-cat').value;
+  let amt = parseFloat(document.getElementById('f-amount').value);
+  if(!amt) return false;
+  // Convert to INR if entered in IDR
+  const inrAmt = addCurrency==='IDR' ? Math.round(amt/XR) : Math.round(amt);
+  const paidBy = document.querySelector('input[name="paidBy"]:checked').value;
+  const note = document.getElementById('f-note').value;
+
+  // Add to the row total
+  state.data[cat][paidBy] = (state.data[cat][paidBy]||0) + inrAmt;
+
+  // Also log it for history
+  state.expenses.push({
+    id: Date.now(),
+    cat, amount: inrAmt, paidBy, note,
+    date: new Date().toISOString().slice(0,10),
+    time: new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+  });
+  save();
+
+  // Show confirmation & reset
+  renderAdd();
+  const card = document.querySelector('#tab-add .card');
+  const msg = document.createElement('div');
+  msg.style.cssText='background:var(--success);color:#fff;padding:10px;border-radius:8px;text-align:center;margin-bottom:10px;font-weight:600';
+  msg.textContent=`Added ${inr(inrAmt)} to ${rowLabel(cat)}`;
+  card.prepend(msg);
+  setTimeout(()=>msg.remove(),2000);
+  return false;
+}
+
+function renderRecent(){
+  const list = document.getElementById('recentList');
+  if(!list) return;
+  const recent = state.expenses.slice(-10).reverse();
+  if(recent.length===0){ list.innerHTML='<div class="empty">No entries yet</div>'; return; }
+  list.innerHTML = recent.map(e=>{
+    const row = allRows().find(r=>r.key===e.cat);
+    return `<div class="expense-item">
+      <div class="row">
+        <div>
+          <div class="desc">${row?rowLabel(e.cat):e.cat}${e.note?' — '+e.note:''}</div>
+          <div class="meta">
+            <span class="chip ${e.paidBy==='A'?'chip-a':'chip-b'}">${e.paidBy==='A'?'Senthil':'Bala'}</span>
+            <span style="font-size:.7rem">${e.date} ${e.time||''}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="amt">${inr(e.amount)}</span>
+          <button class="del-btn" onclick="undoExpense(${e.id})">Undo</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function undoExpense(id){
+  const exp = state.expenses.find(e=>e.id===id);
+  if(!exp) return;
+  if(!confirm(`Undo ${inr(exp.amount)} from ${rowLabel(exp.cat)}?`)) return;
+  // Subtract from row
+  state.data[exp.cat][exp.paidBy] = Math.max(0, (state.data[exp.cat][exp.paidBy]||0) - exp.amount);
+  state.expenses = state.expenses.filter(e=>e.id!==id);
+  save(); renderAdd();
+}
+
+function renderDays(){
+  updateHeader();
+  const di = currentDay;
+  const dayData = ITINERARY[di];
+
+  let itinHTML = '';
+  if(dayData.items.length===0){
+    itinHTML = '<div class="empty">No planned activities</div>';
+  } else {
+    dayData.items.forEach(item=>{
+      const off = item.optional && state.toggledOff.includes(item.name);
+      let totalINR;
+      if(item.split === '50-50') totalINR = toINR(item.idr);
+      else if(item.perType === 'adult') totalINR = toINR(item.idr) * (FAM.A.adults+FAM.B.adults);
+      else if(item.perType === 'kid') totalINR = toINR(item.idr) * (FAM.A.kids+FAM.B.kids);
+      else totalINR = toINR(item.idr) * (FAM.A.pax+FAM.B.pax);
+
+      itinHTML += `
+        <div class="itin-item" style="${off?'opacity:.35;text-decoration:line-through':''}">
+          <div>
+            <div class="name">${item.optional?'⟡ ':''}${item.name}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${idrF(item.idr)}${item.perType?' / person':''} · ${item.split==='50-50'?'50-50':item.perType==='adult'?'per adult':item.perType==='kid'?'per kid':'per person'}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="cost">${inr(totalINR)}</span>
+            ${item.optional?`<button onclick="toggleOpt('${item.name}')" style="border:1.5px solid var(--border);background:${off?'var(--border)':'var(--primary-light)'};border-radius:6px;padding:2px 8px;font-size:.7rem;cursor:pointer">${off?'OFF':'ON'}</button>`:''}
+          </div>
+        </div>`;
+    });
+  }
+
+  const dayInfo = DAY_ITIN[di];
+  const itinListHTML = dayInfo.items.map(item=>{
+    const isOpt = item.startsWith('OPTIONAL:');
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.9rem;${isOpt?'opacity:.7;font-style:italic':''}">
+      ${item}
+    </div>`;
+  }).join('');
+
+  // Actual expenses for this day
+  const date = DATES[di];
+  const dayExpenses = state.expenses.filter(e=>e.date===date);
+  const dayTotal = dayExpenses.reduce((s,e)=>s+e.amount,0);
+  // Build day-specific dropdown: group by base name, then general categories
+  const dayItems = (ITINERARY[di]?.items || []);
+  const seenBases = {};
+  const dayGroupedOpts = [];
+  dayItems.forEach((it,idx)=>{
+    const base = it.name.replace(/ \(Adult\)$| \(Kid\)$/,'');
+    if(!seenBases[base]){ seenBases[base]=idx; dayGroupedOpts.push({base,idx}); }
+  });
+  const dayItemOpts = dayGroupedOpts.length > 0
+    ? `<optgroup label="Today's items">${dayGroupedOpts.map(g=>`<option value="__day_${g.idx}">${g.base}</option>`).join('')}</optgroup>`
+    : '';
+  const generalOpts = `<optgroup label="General">${allRows().filter(r=>!r.fixed).map(r=>`<option value="${r.key}">${rowLabel(r.key)}</option>`).join('')}</optgroup>`;
+  const otherOpt = `<option value="__other">+ Other...</option>`;
+  const catOpts = dayItemOpts + generalOpts + otherOpt;
+
+  let expHTML = '';
+  if(dayExpenses.length>0){
+    expHTML = dayExpenses.map(e=>{
+      const row = allRows().find(r=>r.key===e.cat);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:.9rem;font-weight:500">${row?rowLabel(e.cat):e.cat}${e.note?' — '+e.note:''}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${e.time||''}${e.paidBy==='B'?' · <span class="chip chip-b">Bala paid</span>':''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-weight:700;font-size:.9rem">${inr(e.amount)}</span>
+          <button class="del-btn" onclick="undoDayExp(${e.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('tab-days').innerHTML = `
+    <div class="day-nav">${DATES.map((d,i)=>`<button class="${i===di?'active':''}" onclick="goDay(${i})"><div class="dn">D${i+1}</div>${d.slice(8)}/${d.slice(5,7)}</button>`).join('')}</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:4px">${dayInfo.title}</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${dayInfo.driver?'Driver: YES':'Driver: NO'}</div>
+    <div class="card">
+      <h3>Actual Spend — ${date.slice(5)}${dayTotal>0?' — '+inr(dayTotal):''}</h3>
+      ${expHTML || '<div style="font-size:.85rem;color:var(--muted);padding:4px 0">No expenses yet</div>'}
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select id="day-cat" onchange="toggleOtherInput()" style="flex:1;min-width:100px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;background:#fff">${catOpts}</select>
+        <input id="day-amt" type="number" inputmode="numeric" placeholder="₹" style="width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+        <input id="day-note" type="text" placeholder="Note" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+        <button onclick="addDayExp(${di})" style="padding:8px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;font-size:.85rem;cursor:pointer">+</button>
+      </div>
+      <div style="margin-top:6px;display:flex;gap:6px;align-items:center">
+        <span style="font-size:.75rem;color:var(--muted)">Paid by:</span>
+        <button id="day-payer-btn" onclick="toggleDayPayer()" style="padding:4px 12px;border:1.5px solid var(--fam-a);border-radius:6px;background:#dbeafe;color:var(--fam-a);font-size:.75rem;font-weight:600;cursor:pointer">Senthil</button>
+      </div>
+      <input id="day-other-name" type="text" placeholder="Item name (e.g. Shopping, Market)" style="display:none;width:100%;margin-top:6px;padding:8px;border:1.5px solid var(--primary);border-radius:8px;font-size:.85rem">
+    </div>
+    <div class="card">
+      <h3>Itinerary</h3>
+      ${itinListHTML}
+    </div>
+    ${dayData.items.length>0?(()=>{
+      // Group items by base name (strip " (Adult)"/" (Kid)" suffix)
+      const groups = {};
+      dayData.items.forEach(item=>{
+        const base = item.name.replace(/ \(Adult\)$| \(Kid\)$/,'');
+        if(!groups[base]) groups[base] = {est:0, names:[], optional:false};
+        let estINR;
+        if(item.split==='50-50') estINR=toINR(item.idr);
+        else if(item.perType==='adult') estINR=toINR(item.idr)*(FAM.A.adults+FAM.B.adults);
+        else if(item.perType==='kid') estINR=toINR(item.idr)*(FAM.A.kids+FAM.B.kids);
+        else estINR=toINR(item.idr)*(FAM.A.pax+FAM.B.pax);
+        const off = item.optional && state.toggledOff.includes(item.name);
+        if(!off) groups[base].est += estINR;
+        groups[base].names.push(item.name);
+        if(item.optional) groups[base].optional = true;
+        if(off) groups[base].off = true;
+      });
+      const rows = Object.entries(groups).map(([base,g])=>{
+        const actExp = dayExpenses.filter(e=>g.names.includes(e.note) || e.note===base);
+        const actTotal = actExp.reduce((s,e)=>s+e.amount,0);
+        return `<tr style="${g.off?'opacity:.35;text-decoration:line-through':''}">
+          <td style="font-size:.8rem">${g.optional?'⟡ ':''}${base}</td>
+          <td class="n" style="font-size:.8rem;color:var(--muted)">${inr(g.est)}</td>
+          <td class="n" style="font-size:.8rem;color:${actTotal?'var(--primary)':'var(--border)'}">
+            ${actTotal?inr(actTotal):'—'}</td>
+        </tr>`;
+      }).join('');
+      // Unmatched expenses (not tied to any estimated item)
+      const allNames = dayData.items.map(it=>it.name);
+      const allBases = [...new Set(dayData.items.map(it=>it.name.replace(/ \(Adult\)$| \(Kid\)$/,'')))];
+      const unmatched = dayExpenses.filter(e=>!allNames.includes(e.note) && !allBases.includes(e.note));
+      const unmatchedRows = unmatched.map(e=>`<tr>
+        <td style="font-size:.8rem">${e.note||rowLabel(e.cat)}</td>
+        <td class="n" style="font-size:.8rem;color:var(--border)">—</td>
+        <td class="n" style="font-size:.8rem;color:var(--primary)">${inr(e.amount)}</td>
+      </tr>`).join('');
+      return `<div class="card"><h3>Estimated vs Actual</h3>
+        <table class="sheet">
+          <tr><th style="text-align:left">Item</th><th>Est.</th><th>Actual</th></tr>
+          ${rows}${unmatchedRows}
+        </table>
+      </div>`;
+    })():''}
+  `;
+}
+
+function goDay(i){ currentDay=i; renderDays(); }
+
+let dayPayer = 'A';
+function toggleDayPayer(){
+  dayPayer = dayPayer==='A'?'B':'A';
+  const btn = document.getElementById('day-payer-btn');
+  if(btn){
+    btn.textContent = dayPayer==='A'?'Senthil':'Bala';
+    btn.style.borderColor = dayPayer==='A'?'var(--fam-a)':'var(--fam-b)';
+    btn.style.background = dayPayer==='A'?'#dbeafe':'#ede9fe';
+    btn.style.color = dayPayer==='A'?'var(--fam-a)':'var(--fam-b)';
+  }
+}
+
+function toggleOtherInput(){
+  const sel = document.getElementById('day-cat');
+  const other = document.getElementById('day-other-name');
+  if(other) other.style.display = sel.value==='__other' ? 'block' : 'none';
+}
+
+function addDayExp(di){
+  let cat = document.getElementById('day-cat').value;
+  const amt = parseFloat(document.getElementById('day-amt').value);
+  if(!amt){ alert('Enter amount'); return; }
+  let note = document.getElementById('day-note').value;
+  const inrAmt = Math.round(amt);
+
+  // Handle "Other" — create a custom row
+  if(cat === '__other'){
+    const otherName = (document.getElementById('day-other-name')?.value||'').trim();
+    if(!otherName){ alert('Enter item name'); return; }
+    // Find or create a custom row for this name
+    const existingKey = state.customRows.find(r=>(state.rowLabels[r.key]||r.label)===otherName)?.key;
+    if(existingKey){
+      cat = existingKey;
+    } else {
+      cat = 'custom_' + Date.now();
+      state.customRows.push({key:cat, label:otherName, split:'50-50'});
+      state.data[cat] = {A:0, B:0};
+    }
+    if(!note) note = otherName;
+  }
+
+  // If selecting a day-specific item, map to the right category
+  let itemName = '';
+  if(cat.startsWith('__day_')){
+    const idx = parseInt(cat.replace('__day_',''));
+    const dayItems = ITINERARY[di]?.items || [];
+    const item = dayItems[idx];
+    if(!item){ alert('Item not found'); return; }
+    itemName = item.name.replace(/ \(Adult\)$| \(Kid\)$/,'');
+    // Map to the correct Home tab row
+    cat = item.rowKey || (item.cat === 'driver' ? 'taxi' : 'entrance');
+    if(!note) note = itemName;
+  }
+
+  // Add to row total (Senthil pays everything)
+  if(!state.data[cat]) state.data[cat] = {A:0,B:0};
+  const sp = getRowSplit(cat);
+  if(sp === 'own'){
+    state.data[cat].A += inrAmt;
+  } else {
+    const r = splitRatio(sp);
+    const aShare = Math.round(inrAmt * r.A / r.T);
+    state.data[cat].A += aShare;
+    state.data[cat].B += (inrAmt - aShare);
+  }
+  // Log expense
+  state.expenses.push({
+    id: Date.now(), cat, amount: inrAmt, paidBy: dayPayer, note,
+    date: DATES[di],
+    time: new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})
+  });
+  save(); renderDays();
+}
+
+function undoDayExp(id){
+  const exp = state.expenses.find(e=>e.id===id);
+  if(!exp) return;
+  if(!confirm(`Remove ${inr(exp.amount)}?`)) return;
+  // Reverse from row total
+  const sp = getRowSplit(exp.cat);
+  if(sp === 'own'){
+    state.data[exp.cat].A = Math.max(0, (state.data[exp.cat].A||0) - exp.amount);
+  } else {
+    const r = splitRatio(sp);
+    const aShare = Math.round(exp.amount * r.A / r.T);
+    state.data[exp.cat].A = Math.max(0, (state.data[exp.cat].A||0) - aShare);
+    state.data[exp.cat].B = Math.max(0, (state.data[exp.cat].B||0) - (exp.amount - aShare));
+  }
+  state.expenses = state.expenses.filter(e=>e.id!==id);
+  save(); renderDays();
+}
+
+function toggleOpt(name){
+  const idx = state.toggledOff.indexOf(name);
+  if(idx>=0) state.toggledOff.splice(idx,1);
+  else state.toggledOff.push(name);
+  save(); renderDays();
+}
+
+function renderSettle(){
+  updateHeader();
+  const s = getSettlement();
+  const {sA,sB,sT} = getRowTotals();
+
+  // Build per-row settlement breakdown
+  let breakdownHTML = '';
+  allRows().forEach(r=>{
+    const a = (state.data[r.key]||{}).A || 0;
+    const b = (state.data[r.key]||{}).B || 0;
+    if(a+b === 0) return;
+    let aShare, bShare;
+    if(r.split === 'own'){
+      aShare = a; bShare = b;
+    } else {
+      aShare = (a+b)/2; bShare = (a+b)/2;
+    }
+    breakdownHTML += `
+      <tr>
+        <td>${rowLabel(r.key)}</td>
+        <td class="n">${inr(aShare)}</td>
+        <td class="n">${inr(bShare)}</td>
+        <td class="n" style="font-size:.75rem;color:var(--muted)">${r.split}</td>
+      </tr>`;
+  });
+
+  const paymentsHTML = (state.payments||[]).map(p=>
+    `<tr><td>${p.date}</td><td class="n" style="color:var(--success)">${inr(p.amount)}</td></tr>`
+  ).join('');
+
+  document.getElementById('tab-settle').innerHTML = `
+    <div class="settle-box" style="margin-bottom:12px">
+      ${sT===0?'No expenses yet':
+        Math.abs(s.balaOwes)<1?'All settled up!':
+        s.balaOwes>0?`Bala still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Bala <strong>${inr(-s.balaOwes)}</strong>`}
+    </div>
+    <div class="card">
+      <h3>Summary</h3>
+      <table class="sheet">
+        <tr><th style="text-align:left"></th><th>Amount</th></tr>
+        <tr><td>Total trip cost</td><td class="n">${inr(s.sT)}</td></tr>
+        <tr><td>Senthil's share</td><td class="n a">${inr(s.sA)}</td></tr>
+        <tr><td>Bala's share</td><td class="n b">${inr(s.sB)}</td></tr>
+        <tr><td>Bala paid so far</td><td class="n" style="color:var(--success)">${inr(s.balaReceived)}</td></tr>
+        <tr class="total-row"><td>Bala still owes</td>
+          <td class="n" style="color:${s.balaOwes>0?'var(--danger)':'var(--success)'}">${inr(s.balaOwes)}</td>
+        </tr>
+      </table>
+    </div>
+    ${paymentsHTML?`<div class="card"><h3>Payments Received</h3>
+      <table class="sheet">
+        <tr><th style="text-align:left">Date</th><th>Amount</th></tr>
+        ${paymentsHTML}
+      </table>
+    </div>`:''}
+    ${breakdownHTML?`<div class="card"><h3>Cost Breakdown</h3>
+      <table class="sheet">
+        <tr><th style="text-align:left">Expense</th><th>Senthil</th><th>Bala</th><th>Split</th></tr>
+        ${breakdownHTML}
+      </table>
+    </div>`:''}
+    <button class="export-btn" onclick="exportData()">Copy Report to Clipboard</button>
+    <button class="export-btn" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="clearAll()">Reset All Data</button>
+  `;
+}
+
+function exportData(){
+  const s = getSettlement();
+  const {sA,sB,sT} = getRowTotals();
+  let txt = 'BALI TRIP 2026 — EXPENSE REPORT\n';
+  txt += '================================\n\n';
+  txt += `Bala's share: ${inr(s.balaShare)} | Paid: ${inr(s.balaReceived)} | Owes: ${inr(s.balaOwes)}\n\n`;
+  txt += 'Expense'.padEnd(22) + 'Senthil'.padStart(10) + 'Bala'.padStart(10) + 'Total'.padStart(10) + '\n';
+  txt += '-'.repeat(52) + '\n';
+  allRows().forEach(r=>{
+    const a = (state.data[r.key]||{}).A||0, b = (state.data[r.key]||{}).B||0;
+    txt += rowLabel(r.key).padEnd(22) + String(a).padStart(10) + String(b).padStart(10) + String(a+b).padStart(10) + '\n';
+  });
+  txt += '-'.repeat(52) + '\n';
+  txt += 'Total'.padEnd(22) + String(sA).padStart(10) + String(sB).padStart(10) + String(sT).padStart(10) + '\n';
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied!')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); alert('Copied!');
+  });
+}
+
+function clearAll(){
+  if(!confirm('Reset ALL data? This cannot be undone.')) return;
+  if(!confirm('Are you really sure?')) return;
+  localStorage.removeItem(STORE_KEY);
+  state = loadState();
+  switchTab('dashboard');
+}
+
+// ===== INIT =====
+switchTab('dashboard');
+</script>
+</body>
+</html>

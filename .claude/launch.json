@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "investment-tracker",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "D:/Senthil workspace/investment-tracker/node_modules/vite/bin/vite.js",
+        "D:/Senthil workspace/investment-tracker",
+        "--port",
+        "5175"
+      ],
+      "port": 5175
+    },
+    {
+      "name": "bali-trip-tracker",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "D:/Senthil workspace/serve-bali.js"
+      ],
+      "port": 5180
+    }
+  ]
+}

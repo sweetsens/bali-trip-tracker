@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InvestTrack — UI Mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: #1e293b; }
+  ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .nav-item { transition: all 0.15s; }
+  .nav-item:hover { background: #1e293b; color: #f1f5f9; }
+  .nav-item.active { background: #1d4ed8; color: #fff; }
+  .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #475569; transition: all 0.15s; }
+  .pin-dot.filled { background: #6366f1; border-color: #6366f1; }
+  .pin-btn { background: #1e293b; border: 1px solid #334155; border-radius: 12px; width: 64px; height: 64px;
+    font-size: 22px; cursor: pointer; transition: all 0.1s; color: #f1f5f9; }
+  .pin-btn:hover { background: #334155; }
+  .pin-btn:active { transform: scale(0.95); background: #475569; }
+  .badge-up { background: #064e3b; color: #34d399; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; }
+  .badge-dn { background: #450a0a; color: #f87171; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; }
+  .progress-bar { height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .tab-btn { padding: 8px 20px; border-radius: 8px; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+  .tab-btn.active { background: #6366f1; color: #fff; }
+  .tab-btn:not(.active) { color: #94a3b8; }
+  .tab-btn:not(.active):hover { color: #f1f5f9; background: #334155; }
+  .cat-row { background: #0f172a; border-radius: 10px; padding: 14px 16px; border: 1px solid #1e293b; }
+  .import-btn { background: #1d4ed8; color: white; border-radius: 8px; padding: 6px 14px; font-size: 13px;
+    cursor: pointer; border: none; font-weight: 500; transition: all 0.15s; }
+  .import-btn:hover { background: #2563eb; }
+  .auto-badge { background: #064e3b; color: #34d399; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; }
+  .ring-container { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+  .ring-container .ring-text { position: absolute; text-align: center; }
+  .bucket-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 20px; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease forwards; }
+  .chart-container { position: relative; }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button { display: none; }
+  .ins-card { border: 2px dashed #334155; border-radius: 12px; padding: 20px; text-align: center; }
+</style>
+</head>
+<body class="bg-slate-900 text-slate-100">
+
+<!-- ====== PIN SCREEN ====== -->
+<div id="pin-screen" class="min-h-screen flex items-center justify-center">
+  <div class="text-center fade-in">
+    <div class="mb-8">
+      <div class="text-4xl mb-2">📊</div>
+      <h1 class="text-3xl font-bold text-white">InvestTrack</h1>
+      <p class="text-slate-400 mt-1 text-sm">Your private investment dashboard</p>
+    </div>
+    <div class="card p-8 w-80 mx-auto">
+      <p class="text-slate-400 text-sm mb-5">Enter your 4-digit PIN</p>
+      <div class="flex justify-center gap-4 mb-7" id="pin-dots">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 justify-items-center">
+        <button class="pin-btn" onclick="pinPress('1')">1</button>
+        <button class="pin-btn" onclick="pinPress('2')">2</button>
+        <button class="pin-btn" onclick="pinPress('3')">3</button>
+        <button class="pin-btn" onclick="pinPress('4')">4</button>
+        <button class="pin-btn" onclick="pinPress('5')">5</button>
+        <button class="pin-btn" onclick="pinPress('6')">6</button>
+        <button class="pin-btn" onclick="pinPress('7')">7</button>
+        <button class="pin-btn" onclick="pinPress('8')">8</button>
+        <button class="pin-btn" onclick="pinPress('9')">9</button>
+        <button class="pin-btn" onclick="pinPress('clr')" style="font-size:14px;color:#94a3b8">CLR</button>
+        <button class="pin-btn" onclick="pinPress('0')">0</button>
+        <button class="pin-btn" onclick="pinPress('del')" style="font-size:18px;color:#94a3b8">⌫</button>
+      </div>
+      <p class="text-slate-500 text-xs mt-5">Demo PIN: <span class="text-indigo-400 font-mono font-bold">1 2 3 4</span></p>
+      <p id="pin-error" class="text-red-400 text-xs mt-2 hidden">Incorrect PIN. Try 1234.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== APP SHELL ====== -->
+<div id="app" class="hidden min-h-screen flex">
+
+  <!-- Sidebar -->
+  <nav class="w-56 bg-slate-800 border-r border-slate-700 flex flex-col fixed h-full z-10">
+    <div class="p-5 border-b border-slate-700">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">📊</span>
+        <span class="font-bold text-white text-lg">InvestTrack</span>
+      </div>
+      <p class="text-slate-500 text-xs mt-0.5">Family Portfolio</p>
+    </div>
+    <div class="flex-1 p-3 space-y-1 overflow-y-auto">
+      <div class="nav-item active rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium" onclick="showScreen('dashboard')">
+        <span>🏠</span> Dashboard
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('goals')">
+        <span>🎯</span> Goals & Buckets
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('me')">
+        <span>👤</span> Me
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('wife')">
+        <span>👤</span> Wife
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('entry')">
+        <span>✏️</span> Monthly Entry
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('history')">
+        <span>📋</span> History
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('assets')">
+        <span>🗂️</span> Asset Manager
+      </div>
+      <div class="nav-item rounded-lg px-3 py-2.5 flex items-center gap-3 cursor-pointer text-sm font-medium text-slate-400" onclick="showScreen('settings')">
+        <span>⚙️</span> Settings
+      </div>
+    </div>
+    <div class="p-4 border-t border-slate-700">
+      <button class="text-xs text-slate-500 hover:text-slate-400 transition-colors" onclick="lockApp()">🔒 Lock App</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="ml-56 flex-1 flex flex-col min-h-screen">
+
+    <!-- ====== DASHBOARD SCREEN ====== -->
+    <div id="screen-dashboard" class="screen active fade-in">
+      <!-- Header -->
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-white">Dashboard</h1>
+          <p class="text-slate-400 text-xs mt-0.5">Combined portfolio overview</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="text-slate-400 hover:text-white px-2 py-1 rounded" onclick="prevMonth()">◀</button>
+          <span class="text-white font-semibold text-sm w-28 text-center" id="month-display">March 2026</span>
+          <button class="text-slate-400 hover:text-white px-2 py-1 rounded" onclick="nextMonth()">▶</button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Total Portfolio</p>
+            <p class="text-3xl font-bold text-white mt-1">₹45.24 L</p>
+            <p class="text-slate-500 text-xs mt-1">₹45,23,840</p>
+            <div class="mt-3 flex items-center gap-2">
+              <span class="badge-up">↑ +₹1.23 L</span>
+              <span class="text-slate-400 text-xs">vs last month</span>
+            </div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">Total Returns</p>
+            <p class="text-3xl font-bold text-emerald-400 mt-1">+₹6.32 L</p>
+            <p class="text-slate-500 text-xs mt-1">Invested ₹38.92 L</p>
+            <div class="mt-3 flex items-center gap-2">
+              <span class="badge-up">+16.2%</span>
+              <span class="text-slate-400 text-xs">absolute return</span>
+            </div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider mb-1">FIRE Progress</p>
+            <p class="text-3xl font-bold text-white mt-1">15.1%</p>
+            <p class="text-slate-500 text-xs mt-1">Target ₹3.00 Cr</p>
+            <div class="mt-3">
+              <div class="progress-bar">
+                <div class="progress-fill bg-emerald-500" style="width:15.1%"></div>
+              </div>
+              <p class="text-slate-400 text-xs mt-1">~12 years to FIRE</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="grid grid-cols-3 gap-4">
+          <!-- Growth Line Chart -->
+          <div class="card p-5 col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-sm font-semibold text-white">Portfolio Growth</p>
+              <div class="flex gap-2">
+                <button class="tab-btn active text-xs py-1 px-3" id="toggle-combined" onclick="toggleGrowth('combined')">Combined</button>
+                <button class="tab-btn text-xs py-1 px-3" id="toggle-me" onclick="toggleGrowth('me')">Me</button>
+                <button class="tab-btn text-xs py-1 px-3" id="toggle-wife" onclick="toggleGrowth('wife')">Wife</button>
+              </div>
+            </div>
+            <div class="chart-container" style="height:200px">
+              <canvas id="growthChart"></canvas>
+            </div>
+          </div>
+          <!-- Donut Chart -->
+          <div class="card p-5">
+            <p class="text-sm font-semibold text-white mb-3">Category Breakdown</p>
+            <div class="chart-container" style="height:160px">
+              <canvas id="donutChart"></canvas>
+            </div>
+            <div class="mt-3 space-y-1.5">
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#6366f1" class="inline-block w-2.5 h-2.5 rounded-sm"></span>Stocks</span><span class="text-slate-300">₹8.50 L</span></div>
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#10b981" class="inline-block w-2.5 h-2.5 rounded-sm"></span>Mutual Funds</span><span class="text-slate-300">₹21.50 L</span></div>
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#f59e0b" class="inline-block w-2.5 h-2.5 rounded-sm"></span>FD</span><span class="text-slate-300">₹7.23 L</span></div>
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#0ea5e9" class="inline-block w-2.5 h-2.5 rounded-sm"></span>PPF</span><span class="text-slate-300">₹4.09 L</span></div>
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#8b5cf6" class="inline-block w-2.5 h-2.5 rounded-sm"></span>PF</span><span class="text-slate-300">₹2.60 L</span></div>
+              <div class="flex justify-between text-xs"><span class="flex items-center gap-1.5"><span style="background:#f43f5e" class="inline-block w-2.5 h-2.5 rounded-sm"></span>NPS</span><span class="text-slate-300">₹1.13 L</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Invested vs Current Bar -->
+          <div class="card p-5">
+            <p class="text-sm font-semibold text-white mb-4">Invested vs Current Value</p>
+            <div class="chart-container" style="height:200px">
+              <canvas id="barChart"></canvas>
+            </div>
+          </div>
+          <!-- Me vs Wife -->
+          <div class="card p-5">
+            <p class="text-sm font-semibold text-white mb-4">Me vs Wife</p>
+            <div class="chart-container" style="height:200px">
+              <canvas id="mewifeChart"></canvas>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div class="bg-slate-900 rounded-lg p-3 text-center">
+                <p class="text-xs text-slate-400">Me</p>
+                <p class="text-lg font-bold text-indigo-400">₹29.28 L</p>
+                <p class="text-xs text-emerald-400">+18.4%</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3 text-center">
+                <p class="text-xs text-slate-400">Wife</p>
+                <p class="text-lg font-bold text-rose-400">₹15.95 L</p>
+                <p class="text-xs text-emerald-400">+12.8%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FIRE Panel -->
+        <div class="card p-6">
+          <h3 class="text-sm font-semibold text-white mb-4 uppercase tracking-wider">🔥 FIRE Progress — Household</h3>
+          <div class="grid grid-cols-4 gap-6 items-center">
+            <!-- Ring -->
+            <div class="flex flex-col items-center">
+              <div class="ring-container">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#334155" stroke-width="10"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" stroke-width="10"
+                    stroke-dasharray="314" stroke-dashoffset="266" stroke-linecap="round"
+                    transform="rotate(-90 60 60)"/>
+                </svg>
+                <div class="ring-text">
+                  <p class="text-2xl font-bold text-white">15.1%</p>
+                  <p class="text-xs text-slate-400">achieved</p>
+                </div>
+              </div>
+            </div>
+            <!-- Stats -->
+            <div class="col-span-3 grid grid-cols-3 gap-4">
+              <div class="bg-slate-900 rounded-xl p-4">
+                <p class="text-xs text-slate-400 mb-1">Current Corpus</p>
+                <p class="text-xl font-bold text-white">₹45.24 L</p>
+                <p class="text-xs text-slate-500">₹45,23,840</p>
+              </div>
+              <div class="bg-slate-900 rounded-xl p-4">
+                <p class="text-xs text-slate-400 mb-1">FIRE Target</p>
+                <p class="text-xl font-bold text-emerald-400">₹3.00 Cr</p>
+                <p class="text-xs text-slate-500">25× annual expense</p>
+              </div>
+              <div class="bg-slate-900 rounded-xl p-4">
+                <p class="text-xs text-slate-400 mb-1">Est. Years to FIRE</p>
+                <p class="text-xl font-bold text-amber-400">~12 yrs</p>
+                <p class="text-xs text-slate-500">Based on 6-month growth</p>
+              </div>
+              <div class="bg-slate-900 rounded-xl p-4 col-span-3">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-xs text-slate-400">Gap to FIRE: <span class="text-white font-semibold">₹2.55 Cr remaining</span></p>
+                  <p class="text-xs text-slate-400">Annual expenses: ₹12.00 L · Multiplier: 25×</p>
+                </div>
+                <div class="progress-bar" style="height:10px">
+                  <div class="progress-fill bg-emerald-500" style="width:15.1%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====== GOALS SCREEN ====== -->
+    <div id="screen-goals" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <h1 class="text-xl font-bold text-white">Goals & Buckets</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Track progress against each financial goal</p>
+      </div>
+      <div class="p-6 space-y-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+
+        <!-- Bucket Cards Grid -->
+        <div class="grid grid-cols-2 gap-4">
+
+          <!-- Emergency Fund -->
+          <div class="bucket-card">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#78350f">🚨</div>
+                <div>
+                  <h3 class="font-semibold text-white">Emergency Fund</h3>
+                  <p class="text-xs text-slate-400">6× monthly expenses</p>
+                </div>
+              </div>
+              <span class="text-xs text-amber-400 font-semibold bg-amber-400/10 px-2 py-1 rounded">35.7%</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Current</p>
+                <p class="text-lg font-bold text-white">₹2.14 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Target</p>
+                <p class="text-lg font-bold text-amber-400">₹6.00 L</p>
+              </div>
+            </div>
+            <div class="progress-bar mb-3">
+              <div class="progress-fill" style="width:35.7%;background:#f59e0b"></div>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs text-slate-500 mb-2">Mapped investments:</p>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">🏦 SBI FD (Emergency)</span><span class="text-amber-400">₹2.14 L (auto)</span></div>
+            </div>
+          </div>
+
+          <!-- Child School -->
+          <div class="bucket-card">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#164e63">🎒</div>
+                <div>
+                  <h3 class="font-semibold text-white">Child School Education</h3>
+                  <p class="text-xs text-slate-400">Son, age 8 · Needed ~2033</p>
+                </div>
+              </div>
+              <span class="text-xs text-cyan-400 font-semibold bg-cyan-400/10 px-2 py-1 rounded">54.7%</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Current</p>
+                <p class="text-lg font-bold text-white">₹8.20 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Target</p>
+                <p class="text-lg font-bold text-cyan-400">₹15.00 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Years left</p>
+                <p class="text-lg font-bold text-white">7 yrs</p>
+              </div>
+            </div>
+            <div class="progress-bar mb-3">
+              <div class="progress-fill" style="width:54.7%;background:#06b6d4"></div>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs text-slate-500 mb-2">Mapped investments:</p>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">📈 Mirae ELSS Fund</span><span class="text-emerald-400">₹4.50 L</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">📈 HDFC Mid-Cap</span><span class="text-emerald-400">₹3.70 L</span></div>
+            </div>
+          </div>
+
+          <!-- Child College -->
+          <div class="bucket-card">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#3b0764">🎓</div>
+                <div>
+                  <h3 class="font-semibold text-white">Child College Education</h3>
+                  <p class="text-xs text-slate-400">Son, age 8 · Needed ~2036</p>
+                </div>
+              </div>
+              <span class="text-xs text-purple-400 font-semibold bg-purple-400/10 px-2 py-1 rounded">18.6%</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Current</p>
+                <p class="text-lg font-bold text-white">₹6.50 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Target</p>
+                <p class="text-lg font-bold text-purple-400">₹35.00 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Years left</p>
+                <p class="text-lg font-bold text-white">10 yrs</p>
+              </div>
+            </div>
+            <div class="progress-bar mb-3">
+              <div class="progress-fill" style="width:18.6%;background:#8b5cf6"></div>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs text-slate-500 mb-2">Mapped investments:</p>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">📈 Parag Parikh Flexi Cap</span><span class="text-emerald-400">₹6.50 L</span></div>
+            </div>
+          </div>
+
+          <!-- Retirement -->
+          <div class="bucket-card">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:#052e16">🔥</div>
+                <div>
+                  <h3 class="font-semibold text-white">Retirement Fund</h3>
+                  <p class="text-xs text-slate-400">FIRE target · 25× expenses</p>
+                </div>
+              </div>
+              <span class="text-xs text-emerald-400 font-semibold bg-emerald-400/10 px-2 py-1 rounded">10.2%</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Current</p>
+                <p class="text-lg font-bold text-white">₹30.54 L</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Target</p>
+                <p class="text-lg font-bold text-emerald-400">₹3.00 Cr</p>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <p class="text-xs text-slate-400">Est. years</p>
+                <p class="text-lg font-bold text-white">~12 yrs</p>
+              </div>
+            </div>
+            <div class="progress-bar mb-3">
+              <div class="progress-fill" style="width:10.2%;background:#10b981"></div>
+            </div>
+            <div class="space-y-1.5">
+              <p class="text-xs text-slate-500 mb-2">Mapped investments:</p>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">📈 Stocks (Zerodha)</span><span class="text-emerald-400">₹8.50 L</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">📈 SBI Bluechip + 3 others</span><span class="text-emerald-400">₹10.80 L</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">🏛️ PPF + PF + NPS</span><span class="text-emerald-400">₹7.82 L (auto)</span></div>
+              <div class="flex justify-between text-xs"><span class="text-slate-300">🏦 ICICI FD (Retirement)</span><span class="text-amber-400">₹3.42 L (auto)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Insurance Section -->
+        <div>
+          <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">🛡️ Insurance</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="ins-card">
+              <div class="text-3xl mb-3">🏥</div>
+              <h4 class="font-semibold text-slate-300 mb-1">Health Insurance</h4>
+              <p class="text-slate-500 text-sm">No policy added yet</p>
+              <button class="mt-3 import-btn" onclick="alert('In the real app, you would fill in policy details here.')">+ Add Policy Details</button>
+            </div>
+            <div class="ins-card">
+              <div class="text-3xl mb-3">📋</div>
+              <h4 class="font-semibold text-slate-300 mb-1">Term Insurance</h4>
+              <p class="text-slate-500 text-sm">No policy added yet</p>
+              <button class="mt-3 import-btn" onclick="alert('In the real app, you would fill in policy details here.')">+ Add Policy Details</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ====== ME SCREEN ====== -->
+    <div id="screen-me" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <h1 class="text-xl font-bold text-white">My Portfolio</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Individual view</p>
+      </div>
+      <div class="p-6 space-y-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">My Portfolio</p>
+            <p class="text-3xl font-bold text-white mt-1">₹29.28 L</p>
+            <div class="mt-3 flex items-center gap-2"><span class="badge-up">+18.4% returns</span></div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Invested</p>
+            <p class="text-3xl font-bold text-white mt-1">₹24.72 L</p>
+            <div class="mt-3 flex items-center gap-2"><span class="badge-up">+₹4.56 L gain</span></div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">My FIRE Progress</p>
+            <p class="text-3xl font-bold text-white mt-1">9.8%</p>
+            <div class="mt-2 progress-bar"><div class="progress-fill bg-indigo-500" style="width:9.8%"></div></div>
+            <p class="text-slate-400 text-xs mt-1">Target ₹2.00 Cr</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card p-5">
+            <p class="text-sm font-semibold text-white mb-4">My Category Breakdown</p>
+            <div class="space-y-3">
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Stocks</span><span class="font-semibold text-white">₹8.50 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:29%;background:#6366f1"></div></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Mutual Funds</span><span class="font-semibold text-white">₹12.30 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:42%;background:#10b981"></div></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Fixed Deposits</span><span class="font-semibold text-white">₹4.14 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:14%;background:#f59e0b"></div></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">PPF</span><span class="font-semibold text-white">₹2.24 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:7.6%;background:#0ea5e9"></div></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">PF / EPF</span><span class="font-semibold text-white">₹1.42 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:4.8%;background:#8b5cf6"></div></div></div>
+              <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">NPS</span><span class="font-semibold text-white">₹0.68 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:2.3%;background:#f43f5e"></div></div></div>
+            </div>
+          </div>
+          <div class="card p-5">
+            <p class="text-sm font-semibold text-white mb-4">My FIRE Panel</p>
+            <div class="flex items-center gap-6">
+              <div class="ring-container">
+                <svg width="100" height="100" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#334155" stroke-width="10"/>
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#6366f1" stroke-width="10"
+                    stroke-dasharray="314" stroke-dashoffset="283" stroke-linecap="round"
+                    transform="rotate(-90 60 60)"/>
+                </svg>
+                <div class="ring-text"><p class="text-xl font-bold text-white">9.8%</p></div>
+              </div>
+              <div class="space-y-3">
+                <div><p class="text-xs text-slate-400">Current</p><p class="text-lg font-bold text-white">₹29.28 L</p></div>
+                <div><p class="text-xs text-slate-400">Target</p><p class="text-lg font-bold text-indigo-400">₹2.00 Cr</p></div>
+                <div><p class="text-xs text-slate-400">Gap</p><p class="text-lg font-bold text-amber-400">₹1.71 Cr</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== WIFE SCREEN ====== -->
+    <div id="screen-wife" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <h1 class="text-xl font-bold text-white">Wife's Portfolio</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Individual view</p>
+      </div>
+      <div class="p-6 space-y-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Wife's Portfolio</p>
+            <p class="text-3xl font-bold text-white mt-1">₹15.95 L</p>
+            <div class="mt-3 flex items-center gap-2"><span class="badge-up">+12.8% returns</span></div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Invested</p>
+            <p class="text-3xl font-bold text-white mt-1">₹14.13 L</p>
+            <div class="mt-3 flex items-center gap-2"><span class="badge-up">+₹1.82 L gain</span></div>
+          </div>
+          <div class="card p-5">
+            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Wife's FIRE Progress</p>
+            <p class="text-3xl font-bold text-white mt-1">15.9%</p>
+            <div class="mt-2 progress-bar"><div class="progress-fill bg-rose-500" style="width:15.9%"></div></div>
+            <p class="text-slate-400 text-xs mt-1">Target ₹1.00 Cr</p>
+          </div>
+        </div>
+        <div class="card p-5">
+          <p class="text-sm font-semibold text-white mb-4">Wife's Category Breakdown</p>
+          <div class="space-y-3">
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Stocks</span><span class="font-semibold text-slate-500">₹0 (not started)</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:#6366f1"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Mutual Funds</span><span class="font-semibold text-white">₹9.20 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:57.6%;background:#10b981"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">Fixed Deposits</span><span class="font-semibold text-white">₹3.09 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:19.4%;background:#f59e0b"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">PPF</span><span class="font-semibold text-white">₹1.85 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:11.6%;background:#0ea5e9"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">PF / EPF</span><span class="font-semibold text-white">₹1.18 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:7.4%;background:#8b5cf6"></div></div></div>
+            <div><div class="flex justify-between text-sm mb-1"><span class="text-slate-300">NPS</span><span class="font-semibold text-white">₹0.45 L</span></div><div class="progress-bar"><div class="progress-fill" style="width:2.8%;background:#f43f5e"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== MONTHLY ENTRY SCREEN ====== -->
+    <div id="screen-entry" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-white">Monthly Entry</h1>
+          <p class="text-slate-400 text-xs mt-0.5">Record your portfolio values for the month</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button class="import-btn flex items-center gap-2" onclick="alert('In real app: scans your Downloads folder for latest Kuvera and Zerodha XLSX files and auto-imports them!')">
+            🔍 Detect Reports
+          </button>
+          <span class="text-slate-400 text-sm font-semibold">March 2026</span>
+        </div>
+      </div>
+      <div class="p-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+          <button class="tab-btn active" id="entry-me" onclick="switchEntryTab('me')">👤 Me</button>
+          <button class="tab-btn" id="entry-wife" onclick="switchEntryTab('wife')">👤 Wife</button>
+        </div>
+
+        <div id="entry-me-content">
+          <div class="space-y-3">
+
+            <!-- Stocks Row -->
+            <div class="cat-row">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#312e81">📈</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">Direct Stocks</p>
+                    <p class="text-xs text-slate-400">Zerodha Holdings</p>
+                  </div>
+                </div>
+                <button class="import-btn" onclick="alert('Reads your Zerodha Holdings XLSX and fills in the values automatically!')">📥 Import Zerodha</button>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">Invested Amount</p>
+                  <div class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">₹ 6,20,000</div>
+                </div>
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">Current Value</p>
+                  <div class="bg-slate-800 border border-indigo-500 rounded-lg px-3 py-2 text-white text-sm">₹ 8,50,000</div>
+                </div>
+                <div class="flex items-end pb-2">
+                  <span class="badge-up text-sm">+₹2.30 L (+37.1%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- MF Row -->
+            <div class="cat-row">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#064e3b">📊</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">Mutual Funds</p>
+                    <p class="text-xs text-slate-400">4 schemes · Kuvera</p>
+                  </div>
+                </div>
+                <button class="import-btn" onclick="alert('Reads your Kuvera portfolio XLSX — fetches each scheme individually with invested and current value!')">📥 Import Kuvera</button>
+              </div>
+              <div class="space-y-2 mb-3">
+                <div class="grid grid-cols-4 gap-2 text-xs text-slate-400 px-1">
+                  <span class="col-span-2">Scheme</span><span>Invested</span><span>Current</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2 bg-slate-800 rounded-lg p-2 text-sm">
+                  <span class="col-span-2 text-slate-300 text-xs">SBI Bluechip</span>
+                  <span class="text-slate-400 text-xs">₹3.20 L</span>
+                  <span class="text-emerald-400 text-xs font-semibold">₹4.10 L</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2 bg-slate-800 rounded-lg p-2 text-sm">
+                  <span class="col-span-2 text-slate-300 text-xs">Mirae ELSS</span>
+                  <span class="text-slate-400 text-xs">₹2.50 L</span>
+                  <span class="text-emerald-400 text-xs font-semibold">₹3.20 L</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2 bg-slate-800 rounded-lg p-2 text-sm">
+                  <span class="col-span-2 text-slate-300 text-xs">Parag Parikh Flexi Cap</span>
+                  <span class="text-slate-400 text-xs">₹2.60 L</span>
+                  <span class="text-emerald-400 text-xs font-semibold">₹3.50 L</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2 bg-slate-800 rounded-lg p-2 text-sm">
+                  <span class="col-span-2 text-slate-300 text-xs">HDFC Mid-Cap Opp.</span>
+                  <span class="text-slate-400 text-xs">₹1.50 L</span>
+                  <span class="text-emerald-400 text-xs font-semibold">₹1.50 L</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 mt-2">
+                <span class="text-xs text-slate-400">Total MF:</span>
+                <span class="text-white font-semibold text-sm">₹9.80 L invested → ₹12.30 L current</span>
+                <span class="badge-up">+₹2.50 L</span>
+              </div>
+            </div>
+
+            <!-- FD Row (Auto) -->
+            <div class="cat-row" style="opacity:0.85">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#78350f">🏦</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">Fixed Deposits</p>
+                    <p class="text-xs text-slate-400">2 active FDs</p>
+                  </div>
+                </div>
+                <span class="auto-badge">✓ Auto-calculated</span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 mt-3">
+                <div><p class="text-xs text-slate-400 mb-1">Total Principal</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-slate-400 text-sm">₹ 4,00,000</div></div>
+                <div><p class="text-xs text-slate-400 mb-1">Current Value</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-amber-400 text-sm font-semibold">₹ 4,14,320</div></div>
+                <div class="flex items-end pb-2"><span class="badge-up">+₹14,320</span></div>
+              </div>
+            </div>
+
+            <!-- PPF Row (Auto) -->
+            <div class="cat-row" style="opacity:0.85">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#0c4a6e">🏛️</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">PPF</p>
+                    <p class="text-xs text-slate-400">7.1% p.a. · 2 contributions logged</p>
+                  </div>
+                </div>
+                <span class="auto-badge">✓ Auto-calculated</span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 mt-3">
+                <div><p class="text-xs text-slate-400 mb-1">Total Invested</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-slate-400 text-sm">₹ 2,00,000</div></div>
+                <div><p class="text-xs text-slate-400 mb-1">Current Value</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-sky-400 text-sm font-semibold">₹ 2,24,500</div></div>
+                <div class="flex items-end pb-2"><span class="badge-up">+₹24,500</span></div>
+              </div>
+            </div>
+
+            <!-- PF Row (Auto) -->
+            <div class="cat-row" style="opacity:0.85">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#2e1065">🏢</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">PF / EPF</p>
+                    <p class="text-xs text-slate-400">8.25% p.a. · ₹10,000/mo contribution</p>
+                  </div>
+                </div>
+                <span class="auto-badge">✓ Auto-calculated</span>
+              </div>
+              <div class="grid grid-cols-3 gap-3 mt-3">
+                <div><p class="text-xs text-slate-400 mb-1">Total Invested</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-slate-400 text-sm">₹ 1,30,000</div></div>
+                <div><p class="text-xs text-slate-400 mb-1">Current Value</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-violet-400 text-sm font-semibold">₹ 1,42,000</div></div>
+                <div class="flex items-end pb-2"><span class="badge-up">+₹12,000</span></div>
+              </div>
+            </div>
+
+            <!-- NPS Row (Manual) -->
+            <div class="cat-row">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#4c0519">🪙</div>
+                  <div>
+                    <p class="font-semibold text-white text-sm">NPS — Tier 1</p>
+                    <p class="text-xs text-slate-400">Enter current balance from NSDL app</p>
+                  </div>
+                </div>
+                <span class="text-xs text-amber-400 font-medium">1 number needed</span>
+              </div>
+              <div class="grid grid-cols-3 gap-3">
+                <div><p class="text-xs text-slate-400 mb-1">Total Invested</p><div class="bg-slate-900 rounded-lg px-3 py-2 text-slate-400 text-sm">₹ 60,000</div></div>
+                <div>
+                  <p class="text-xs text-slate-400 mb-1">Current Value <span class="text-amber-400">← enter this</span></p>
+                  <input type="text" value="68,000" class="w-full bg-slate-800 border border-rose-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-rose-400" placeholder="Enter current balance">
+                </div>
+                <div class="flex items-end pb-2"><span class="badge-up">+₹8,000 (+13.3%)</span></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Save Button -->
+          <div class="mt-6 flex justify-end gap-3">
+            <button class="px-4 py-2 text-slate-400 text-sm hover:text-white transition-colors">Cancel</button>
+            <button class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm transition-colors" onclick="alert('Data saved! Backup file updated at your chosen folder.')">
+              💾 Save March 2026
+            </button>
+          </div>
+        </div>
+
+        <div id="entry-wife-content" class="hidden">
+          <p class="text-slate-400 text-sm">Wife's entry form — same structure, pre-populated with her data.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== HISTORY SCREEN ====== -->
+    <div id="screen-history" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-white">History</h1>
+          <p class="text-slate-400 text-xs mt-0.5">Month-by-month portfolio record</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="tab-btn active text-xs py-1 px-3" id="hist-combined">Combined</button>
+          <button class="tab-btn text-xs py-1 px-3" id="hist-me" onclick="">Me</button>
+          <button class="tab-btn text-xs py-1 px-3" id="hist-wife" onclick="">Wife</button>
+          <button class="import-btn ml-2" onclick="alert('Exports history as CSV file')">⬇️ Export CSV</button>
+        </div>
+      </div>
+      <div class="p-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <div class="card overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="text-left px-4 py-3 text-slate-400 font-medium">Month</th>
+                <th class="text-right px-4 py-3 text-slate-400 font-medium">Portfolio Value</th>
+                <th class="text-right px-4 py-3 text-slate-400 font-medium">Invested</th>
+                <th class="text-right px-4 py-3 text-slate-400 font-medium">Returns</th>
+                <th class="text-right px-4 py-3 text-slate-400 font-medium">Return %</th>
+                <th class="text-right px-4 py-3 text-slate-400 font-medium">MoM Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-white font-medium">Mar 2026 <span class="text-xs text-indigo-400">(current)</span></td>
+                <td class="px-4 py-3 text-right text-white font-semibold">₹45.24 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹38.92 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹6.32 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+16.2%</span></td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+₹1.23 L</span></td>
+              </tr>
+              <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-slate-300">Feb 2026</td>
+                <td class="px-4 py-3 text-right text-white">₹44.20 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹38.10 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹6.10 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+16.0%</span></td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+₹1.20 L</span></td>
+              </tr>
+              <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-slate-300">Jan 2026</td>
+                <td class="px-4 py-3 text-right text-white">₹43.00 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹37.80 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹5.20 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+13.8%</span></td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+₹1.80 L</span></td>
+              </tr>
+              <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-slate-300">Dec 2025</td>
+                <td class="px-4 py-3 text-right text-white">₹41.20 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹37.20 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹4.00 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+10.8%</span></td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+₹0.40 L</span></td>
+              </tr>
+              <tr class="border-b border-slate-700/50 hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-slate-300">Nov 2025</td>
+                <td class="px-4 py-3 text-right text-white">₹40.80 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹37.00 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹3.80 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+10.3%</span></td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+₹1.30 L</span></td>
+              </tr>
+              <tr class="hover:bg-slate-700/30">
+                <td class="px-4 py-3 text-slate-300">Oct 2025</td>
+                <td class="px-4 py-3 text-right text-white">₹39.50 L</td>
+                <td class="px-4 py-3 text-right text-slate-400">₹36.80 L</td>
+                <td class="px-4 py-3 text-right text-emerald-400">+₹2.70 L</td>
+                <td class="px-4 py-3 text-right"><span class="badge-up">+7.3%</span></td>
+                <td class="px-4 py-3 text-right text-slate-400">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== ASSETS SCREEN ====== -->
+    <div id="screen-assets" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <h1 class="text-xl font-bold text-white">Asset Manager</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Manage your FDs, PPF, PF, NPS and MF scheme assignments</p>
+      </div>
+      <div class="p-6 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-white">🏦 Fixed Deposits (Me)</h3>
+              <button class="import-btn text-xs" onclick="alert('Add new FD: enter label, principal, rate, compounding, start date, tenure, bucket')">+ Add FD</button>
+            </div>
+            <div class="space-y-3">
+              <div class="bg-slate-900 rounded-lg p-3">
+                <div class="flex justify-between mb-1"><span class="text-sm text-white font-medium">SBI FD (Emergency)</span><span class="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">Active</span></div>
+                <div class="grid grid-cols-3 gap-2 text-xs text-slate-400 mt-2">
+                  <span>₹2,00,000 principal</span><span>7.0% · Quarterly</span><span>Apr 25 – Apr 27</span>
+                </div>
+                <div class="flex justify-between mt-2"><span class="text-xs text-slate-400">Current value</span><span class="text-xs text-amber-400 font-semibold">₹2,14,320 (auto)</span></div>
+              </div>
+              <div class="bg-slate-900 rounded-lg p-3">
+                <div class="flex justify-between mb-1"><span class="text-sm text-white font-medium">ICICI FD (Retirement)</span><span class="text-xs text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">Active</span></div>
+                <div class="grid grid-cols-3 gap-2 text-xs text-slate-400 mt-2">
+                  <span>₹2,00,000 principal</span><span>7.25% · Quarterly</span><span>Jun 25 – Jun 27</span>
+                </div>
+                <div class="flex justify-between mt-2"><span class="text-xs text-slate-400">Current value</span><span class="text-xs text-amber-400 font-semibold">₹2,00,000 (auto)</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-white">🏛️ PPF Log (Me)</h3>
+              <button class="import-btn text-xs" onclick="alert('Log a new PPF contribution: date + amount')">+ Log Contribution</button>
+            </div>
+            <div class="bg-slate-900 rounded-lg p-3 mb-3">
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Opening balance (Mar 2025)</span><span class="text-white font-semibold">₹5,00,000</span></div>
+              <div class="flex justify-between text-sm mt-1"><span class="text-slate-400">Rate</span><span class="text-sky-400">7.1% p.a.</span></div>
+              <div class="flex justify-between text-sm mt-1"><span class="text-slate-400">Current value (auto)</span><span class="text-sky-400 font-semibold">₹2,24,500</span></div>
+            </div>
+            <div class="space-y-2">
+              <p class="text-xs text-slate-500 uppercase">Contributions</p>
+              <div class="flex justify-between text-sm bg-slate-900 rounded-lg px-3 py-2"><span class="text-slate-300">Jul 2025</span><span class="text-white">₹50,000</span></div>
+              <div class="flex justify-between text-sm bg-slate-900 rounded-lg px-3 py-2"><span class="text-slate-300">Jan 2026</span><span class="text-white">₹1,00,000</span></div>
+            </div>
+          </div>
+          <div class="card p-5">
+            <h3 class="font-semibold text-white mb-4">🏢 PF / EPF Setup (Me)</h3>
+            <div class="space-y-3 bg-slate-900 rounded-lg p-3">
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Opening balance (Mar 2025)</span><span class="text-white">₹3,00,000</span></div>
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Employee monthly</span><span class="text-white">₹5,000</span></div>
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Employer monthly</span><span class="text-white">₹5,000</span></div>
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Rate</span><span class="text-violet-400">8.25% p.a.</span></div>
+              <div class="flex justify-between text-sm font-semibold"><span class="text-slate-400">Current value (auto)</span><span class="text-violet-400">₹1,42,000</span></div>
+            </div>
+          </div>
+          <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-white">🪙 NPS Contributions (Me)</h3>
+              <button class="import-btn text-xs" onclick="alert('Log NPS contribution: date + amount')">+ Log</button>
+            </div>
+            <div class="bg-slate-900 rounded-lg p-3 mb-3">
+              <div class="flex justify-between text-sm"><span class="text-slate-400">Opening balance (Mar 2025)</span><span class="text-white">₹1,00,000</span></div>
+              <div class="flex justify-between text-sm mt-1"><span class="text-slate-400">Total invested (auto)</span><span class="text-rose-400">₹1,50,000</span></div>
+            </div>
+            <div class="space-y-2">
+              <p class="text-xs text-slate-500 uppercase">Contributions</p>
+              <div class="flex justify-between text-sm bg-slate-900 rounded-lg px-3 py-2"><span class="text-slate-300">Apr 2025</span><span class="text-white">₹50,000</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== SETTINGS SCREEN ====== -->
+    <div id="screen-settings" class="screen fade-in">
+      <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <h1 class="text-xl font-bold text-white">Settings</h1>
+        <p class="text-slate-400 text-xs mt-0.5">Configure your tracker preferences</p>
+      </div>
+      <div class="p-6 space-y-4 overflow-y-auto" style="height: calc(100vh - 73px)">
+        <div class="card p-5 space-y-4">
+          <h3 class="font-semibold text-white">🔐 Security</h3>
+          <div class="flex items-center justify-between">
+            <div><p class="text-sm text-slate-300">Change PIN</p><p class="text-xs text-slate-500">Update your 4-digit unlock PIN</p></div>
+            <button class="import-btn" onclick="alert('PIN change flow: enter current PIN, then new PIN twice')">Change PIN</button>
+          </div>
+        </div>
+        <div class="card p-5 space-y-4">
+          <h3 class="font-semibold text-white">🔥 FIRE Settings</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div><p class="text-xs text-slate-400 mb-1">Household Annual Expenses (₹)</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">12,00,000</div></div>
+            <div><p class="text-xs text-slate-400 mb-1">FIRE Multiplier</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">25×</div></div>
+            <div><p class="text-xs text-slate-400 mb-1">Manual Target Corpus (₹) — optional</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">3,00,00,000</div></div>
+            <div><p class="text-xs text-slate-400 mb-1">Monthly Household Expenses (₹)</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">1,00,000</div></div>
+          </div>
+        </div>
+        <div class="card p-5 space-y-4">
+          <h3 class="font-semibold text-white">📈 Interest Rates</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div><p class="text-xs text-slate-400 mb-1">PPF Rate (% p.a.)</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">7.1</div></div>
+            <div><p class="text-xs text-slate-400 mb-1">PF / EPF Rate (% p.a.)</p><div class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm">8.25</div></div>
+          </div>
+        </div>
+        <div class="card p-5 space-y-4">
+          <h3 class="font-semibold text-white">💾 Backup & Restore</h3>
+          <div class="flex items-center justify-between">
+            <div><p class="text-sm text-slate-300">Backup Folder</p><p class="text-xs text-slate-500">C:\Users\...\Documents\InvestTrack</p></div>
+            <button class="import-btn" onclick="alert('Opens folder picker to choose where backup JSON is saved')">Change Folder</button>
+          </div>
+          <div class="flex items-center justify-between">
+            <div><p class="text-sm text-slate-300">Restore from Backup</p><p class="text-xs text-slate-500">Import a previously saved backup JSON file</p></div>
+            <button class="import-btn" onclick="alert('Opens file picker to select backup JSON and restore all data')">Restore</button>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold text-red-400 mb-3">⚠️ Danger Zone</h3>
+          <div class="flex items-center justify-between">
+            <div><p class="text-sm text-slate-300">Reset All Data</p><p class="text-xs text-slate-500">Permanently delete all portfolio data. Cannot be undone.</p></div>
+            <button class="px-4 py-2 bg-red-900/50 text-red-400 border border-red-800 rounded-lg text-sm hover:bg-red-900" onclick="alert('Are you sure? This cannot be undone. Confirmation dialog would appear here.')">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---- PIN Logic ----
+let pin = '';
+const CORRECT_PIN = '1234';
+
+function pinPress(v) {
+  if (v === 'del') { pin = pin.slice(0, -1); }
+  else if (v === 'clr') { pin = ''; }
+  else if (pin.length < 4) { pin += v; }
+  updateDots();
+  document.getElementById('pin-error').classList.add('hidden');
+  if (pin.length === 4) { setTimeout(checkPin, 200); }
+}
+
+function updateDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('d' + i);
+    d.classList.toggle('filled', i < pin.length);
+  }
+}
+
+function checkPin() {
+  if (pin === CORRECT_PIN) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    initCharts();
+  } else {
+    document.getElementById('pin-error').classList.remove('hidden');
+    pin = ''; updateDots();
+  }
+}
+
+function lockApp() {
+  pin = ''; updateDots();
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+
+// ---- Navigation ----
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('active');
+    n.classList.add('text-slate-400');
+    n.style.color = '';
+  });
+  const items = document.querySelectorAll('.nav-item');
+  const map = { dashboard:0, goals:1, me:2, wife:3, entry:4, history:5, assets:6, settings:7 };
+  if (map[name] !== undefined) {
+    items[map[name]].classList.add('active');
+    items[map[name]].classList.remove('text-slate-400');
+  }
+  // Re-trigger fade animation
+  const s = document.getElementById('screen-' + name);
+  s.classList.remove('fade-in');
+  void s.offsetWidth;
+  s.classList.add('fade-in');
+}
+
+// ---- Month Selector ----
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let currentMonth = 2; let currentYear = 2026;
+function updateMonthDisplay() {
+  document.getElementById('month-display').textContent = months[currentMonth] + ' ' + currentYear;
+}
+function prevMonth() { if (currentMonth === 0) { currentMonth = 11; currentYear--; } else currentMonth--; updateMonthDisplay(); }
+function nextMonth() { if (currentMonth === 11) { currentMonth = 0; currentYear++; } else currentMonth++; updateMonthDisplay(); }
+
+// ---- Entry Tabs ----
+function switchEntryTab(tab) {
+  document.getElementById('entry-me').classList.toggle('active', tab === 'me');
+  document.getElementById('entry-wife').classList.toggle('active', tab === 'wife');
+  document.getElementById('entry-me-content').classList.toggle('hidden', tab !== 'me');
+  document.getElementById('entry-wife-content').classList.toggle('hidden', tab !== 'wife');
+}
+
+// ---- Charts ----
+let growthChart, donutChart, barChart, mewifeChart;
+let growthMode = 'combined';
+
+function initCharts() {
+  const months6 = ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26'];
+  const combinedData = [39.5, 40.8, 41.2, 43.0, 44.2, 45.24];
+  const meData = [24.8, 25.5, 25.9, 27.0, 28.0, 29.28];
+  const wifeData = [14.7, 15.3, 15.3, 16.0, 16.2, 15.96];
+
+  // Growth Line Chart
+  const gCtx = document.getElementById('growthChart').getContext('2d');
+  growthChart = new Chart(gCtx, {
+    type: 'line',
+    data: {
+      labels: months6,
+      datasets: [{
+        label: 'Portfolio (₹ L)', data: combinedData,
+        borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)',
+        tension: 0.4, fill: true, pointBackgroundColor: '#6366f1', pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 11 }, callback: v => '₹' + v + 'L' } }
+      }
+    }
+  });
+
+  // Donut Chart
+  const dCtx = document.getElementById('donutChart').getContext('2d');
+  donutChart = new Chart(dCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Stocks','MF','FD','PPF','PF','NPS'],
+      datasets: [{
+        data: [8.5, 21.5, 7.23, 4.09, 2.60, 1.13],
+        backgroundColor: ['#6366f1','#10b981','#f59e0b','#0ea5e9','#8b5cf6','#f43f5e'],
+        borderWidth: 2, borderColor: '#0f172a'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ₹' + ctx.raw + ' L' } }
+      },
+      cutout: '65%'
+    }
+  });
+
+  // Invested vs Current Bar
+  const bCtx = document.getElementById('barChart').getContext('2d');
+  barChart = new Chart(bCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Stocks','MF','FD','PPF','PF','NPS'],
+      datasets: [
+        { label: 'Invested', data: [6.2, 17.3, 6.8, 3.8, 2.4, 1.0], backgroundColor: '#334155' },
+        { label: 'Current',  data: [8.5, 21.5, 7.23, 4.09, 2.60, 1.13], backgroundColor: ['#6366f1','#10b981','#f59e0b','#0ea5e9','#8b5cf6','#f43f5e'] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '₹' + v + 'L' } }
+      }
+    }
+  });
+
+  // Me vs Wife Stacked Bar
+  const mCtx = document.getElementById('mewifeChart').getContext('2d');
+  mewifeChart = new Chart(mCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Stocks','MF','FD','PPF','PF','NPS'],
+      datasets: [
+        { label: 'Me',   data: [8.5, 12.3, 4.14, 2.24, 1.42, 0.68], backgroundColor: '#6366f1', borderRadius: 4 },
+        { label: 'Wife', data: [0,   9.2,  3.09, 1.85, 1.18, 0.45], backgroundColor: '#f43f5e', borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+        y: { stacked: true, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '₹' + v + 'L' } }
+      }
+    }
+  });
+}
+
+function toggleGrowth(mode) {
+  growthMode = mode;
+  ['combined','me','wife'].forEach(m => {
+    document.getElementById('toggle-'+m).classList.toggle('active', m === mode);
+  });
+  const d = { combined: [39.5,40.8,41.2,43.0,44.2,45.24], me: [24.8,25.5,25.9,27.0,28.0,29.28], wife: [14.7,15.3,15.3,16.0,16.2,15.96] };
+  const c = { combined: '#6366f1', me: '#6366f1', wife: '#f43f5e' };
+  growthChart.data.datasets[0].data = d[mode];
+  growthChart.data.datasets[0].borderColor = c[mode];
+  growthChart.data.datasets[0].backgroundColor = c[mode] + '20';
+  growthChart.data.datasets[0].pointBackgroundColor = c[mode];
+  growthChart.update();
+}
+</script>
+</body>
+</html>

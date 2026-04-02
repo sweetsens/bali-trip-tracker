@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Bali Trip 2026</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d9488">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -20,8 +22,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   padding-bottom:70px;min-height:100vh;-webkit-tap-highlight-color:transparent}
 header{background:linear-gradient(135deg,#0d9488,#0891b2);color:#fff;
   padding:16px 20px 14px;position:sticky;top:0;z-index:10}
-header h1{font-size:1.2rem;font-weight:700}
+header h1{font-size:1.2rem;font-weight:700;display:flex;justify-content:space-between;align-items:center}
 header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
+.share-btn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);
+  color:#fff;padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:600;cursor:pointer}
+.share-btn:active{background:rgba(255,255,255,.3)}
+.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.sync-dot.online{background:#22c55e}
+.sync-dot.offline{background:#f97316}
 .tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;
   display:flex;border-top:1px solid var(--border);z-index:10;
   max-width:480px;margin:0 auto}
@@ -89,7 +97,7 @@ header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
 .itin-item:last-child{border-bottom:none}
 .itin-item .name{font-size:.9rem;font-weight:500}
 .itin-item .cost{font-size:.85rem;font-weight:600;color:var(--primary);white-space:nowrap}
-.itin-item.optional .name::before{content:'⟡ ';font-size:.7rem}
+.itin-item.optional .name::before{content:'* ';font-size:.7rem}
 .expense-item{padding:10px 0;border-bottom:1px solid var(--border)}
 .expense-item:last-child{border-bottom:none}
 .expense-item .row{display:flex;justify-content:space-between;align-items:center}
@@ -101,15 +109,24 @@ header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
 .export-btn{margin-top:12px;padding:10px;border:1.5px solid var(--primary);
   border-radius:10px;background:transparent;color:var(--primary);
   font-weight:600;font-size:.85rem;width:100%;cursor:pointer}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;color:var(--muted);gap:12px}
+.loading-screen .spinner{width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+body.view-only .edit-only{display:none!important}
+.view-badge{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:600}
 </style>
 </head>
 <body>
 <header>
-  <h1>Bali Trip 2026</h1>
-  <div class="settle-bar" id="headerSettle"></div>
+  <h1>Bali Trip 2026 <button class="share-btn" onclick="shareTrip()" id="shareBtn">Share</button></h1>
+  <div class="settle-bar" id="headerSettle"><span class="sync-dot offline"></span>Connecting...</div>
 </header>
 
-<div id="tab-dashboard" class="tab-content active"></div>
+<div id="tab-dashboard" class="tab-content active">
+  <div class="loading-screen"><div class="spinner"></div><div>Loading trip data...</div></div>
+</div>
 <div id="tab-add" class="tab-content"></div>
 <div id="tab-days" class="tab-content"></div>
 <div id="tab-settle" class="tab-content"></div>
@@ -133,20 +150,55 @@ header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
   </button>
 </nav>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
+// ===== FIREBASE INIT =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBc7p3cQetKypJdf3k7S6MdOPwZjdh7ots",
+  authDomain: "bali-trip-82786.firebaseapp.com",
+  projectId: "bali-trip-82786",
+  storageBucket: "bali-trip-82786.firebasestorage.app",
+  messagingSenderId: "890675275898",
+  appId: "1:890675275898:web:69591713aa9bf32a3d33c3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Enable offline persistence
+db.enablePersistence({synchronizeTabs: true}).catch(err => {
+  console.warn('Firestore persistence unavailable:', err.code);
+});
+
+// ===== TRIP ID =====
+function getTripId() {
+  let raw = location.hash.replace('#', '');
+  const isView = raw.endsWith('/view');
+  if (isView) raw = raw.replace('/view', '');
+  if (!raw) {
+    raw = Math.random().toString(36).substring(2, 10);
+    location.hash = raw;
+  }
+  return { id: raw, viewOnly: isView };
+}
+const { id: TRIP_ID, viewOnly: VIEW_ONLY } = getTripId();
+const tripRef = db.collection('trips').doc(TRIP_ID);
+
 // ===== CONSTANTS =====
 const XR = 182; // IDR per INR
-const FAM = {A:{adults:2,kids:1,pax:3,name:'Senthil'},B:{adults:2,kids:2,pax:4,name:'Bala'}};
+const FAM = {A:{adults:2,kids:1,pax:3,name:'Senthil'},B:{adults:2,kids:2,pax:4,name:'Sathiya'}};
 const DATES = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05'];
-const DAY_LABELS = ['Day 1 — Arrival','Day 2 — Ubud Centre + Waterfalls','Day 3 — Alas Harum Loop','Day 4 — Flex Day','Day 5 — North/West Loop','Day 6 — Rafting + Chill','Day 7 — Transfer + South Bali','Day 8 — Waterbom','Day 9 — Departure'];
+const DAY_LABELS = ['Day 1 - Arrival','Day 2 - Ubud Centre + Waterfalls','Day 3 - Alas Harum Loop','Day 4 - Flex Day','Day 5 - North/West Loop','Day 6 - Rafting + Chill','Day 7 - Transfer + South Bali','Day 8 - Waterbom','Day 9 - Departure'];
 
 const DAY_ITIN = [
-  {title:'Sun 27 Apr — ARRIVAL', driver:false, items:[
-    '8 PM — Arrive Ngurah Rai Airport',
+  {title:'Sun 27 Apr - ARRIVAL', driver:false, items:[
+    '8 PM - Arrive Ngurah Rai Airport',
     'Drive to Ubud (~1.5 hrs)',
     'Check in & rest',
   ]},
-  {title:'Mon 28 Apr — UBUD CENTRE + WATERFALLS (Medium)', driver:true, items:[
+  {title:'Mon 28 Apr - UBUD CENTRE + WATERFALLS (Medium)', driver:true, items:[
     'Ubud Palace (free)',
     'Ubud Art Market (free)',
     'Saraswati Temple',
@@ -154,42 +206,42 @@ const DAY_ITIN = [
     'Tibumana Waterfall',
     'OPTIONAL: Tirta Empul (if time)',
   ]},
-  {title:'Tue 29 Apr — ALAS HARUM LOOP (Heavy)', driver:true, items:[
+  {title:'Tue 29 Apr - ALAS HARUM LOOP (Heavy)', driver:true, items:[
     'Alas Harum (rice terraces + swings)',
     'OPTIONAL: Kintamani Viewpoint',
     'Penglipuran Village',
     'Back to Champaca',
   ]},
-  {title:'Wed 30 Apr — EAST BALI (Flex)', driver:true, items:[
+  {title:'Wed 30 Apr - EAST BALI (Flex)', driver:true, items:[
     'Lahangan Sweet',
     'Tirta Gangga',
     'Bukit Cinta (free)',
   ]},
-  {title:'Thu 1 May — NORTH/WEST LOOP (Heavy)', driver:true, items:[
+  {title:'Thu 1 May - NORTH/WEST LOOP (Heavy)', driver:true, items:[
     'Sangeh Monkey Forest',
     'Ulun Danu Beratan Temple',
     'Handara Gate (photo stop)',
     'Wanagiri Hidden Hill (viewpoint)',
     'Jatiluwih Rice Terraces',
   ]},
-  {title:'Fri 2 May — RAFTING + CHILL (Medium)', driver:false, items:[
+  {title:'Fri 2 May - RAFTING + CHILL (Medium)', driver:false, items:[
     'Morning: Ayung River Rafting (pickup + lunch included)',
     'Afternoon: Chill, pool',
     'Evening: Pack for Kuta move',
   ]},
-  {title:'Sat 3 May — TRANSFER + SOUTH BALI (Heavy)', driver:true, items:[
-    'Checkout Ubud → Kuta check in',
+  {title:'Sat 3 May - TRANSFER + SOUTH BALI (Heavy)', driver:true, items:[
+    'Checkout Ubud -> Kuta check in',
     'Padang Padang Beach',
     'Uluwatu Temple',
     'Kecak Fire Dance',
     'Jimbaran dinner',
   ]},
-  {title:'Sun 4 May — WATERBOM (Medium)', driver:false, items:[
+  {title:'Sun 4 May - WATERBOM (Medium)', driver:false, items:[
     'Waterbom full day',
     'No outside food allowed (food tracked separately)',
     'OPTIONAL: Swap for Nusa Penida day trip',
   ]},
-  {title:'Mon 5 May — DEPARTURE', driver:false, items:[
+  {title:'Mon 5 May - DEPARTURE', driver:false, items:[
     'Morning: Free time',
     'Airport by 7 PM',
     'Flight AK 375, 10:15 PM',
@@ -197,8 +249,7 @@ const DAY_ITIN = [
 ];
 
 // Expense rows matching the spreadsheet layout
-// split: 'own' = each family's own, '50-50' = shared equally
-// split: 'own' = individual, '50-50' = equal, '4:3' = by headcount (Bala 4, Senthil 3)
+// split: 'own' = individual, '50-50' = equal, '4:3' = by headcount (Sathiya 4, Senthil 3)
 const ROWS = [
   {key:'flight',      label:'Flight',             split:'own',  fixed:true},
   {key:'visa',        label:'Visa',               split:'own',  fixed:true},
@@ -286,54 +337,126 @@ const ITINERARY = [
 
 // Pre-seeded estimated data
 const SEED_DATA = {
-  flight:       {A:93087,  B:124116},  // actual paid
-  visa:         {A:8523,   B:11364},   // actual paid
-  ubud_hotel:   {A:52500,  B:52500},   // ₹1,05,000 total (Champaca 6 nights)
-  kuta_hotel:   {A:12500,  B:12500},   // ₹25,000 total (2 nights + late checkout)
-  airport1:     {A:3250,   B:3250},    // arrival transfer
-  airport2:     {A:3250,   B:3250},    // departure transfer
-  driver:       {A:10500,  B:10500},   // 5 days × ₹4,200/day
-  food:         {A:29250,  B:29250},   // 9 days × ₹6,500/day
-  waterbom_food:{A:2750,   B:2750},    // Waterbom food (no outside food)
-  rafting:      {A:11220,  B:14960},   // Ayung rafting ₹3,740pp
-  alas_harum:   {A:4125,   B:5500},    // entry ₹275pp + swings ₹1,100pp
-  waterbom:     {A:7871,   B:10000},   // adult ₹2,871 + kid ₹2,129
-  entrance:     {A:13885,  B:17908},   // all entrance fees incl Tirta Empul, Kintamani, East Bali
-  misc:         {A:7500,   B:7500},    // sim cards, sunscreen, tips, Grab
+  flight:       {A:93087,  B:124116},
+  visa:         {A:8523,   B:11364},
+  ubud_hotel:   {A:52500,  B:52500},
+  kuta_hotel:   {A:12500,  B:12500},
+  airport1:     {A:3250,   B:3250},
+  airport2:     {A:3250,   B:3250},
+  driver:       {A:10500,  B:10500},
+  food:         {A:29250,  B:29250},
+  waterbom_food:{A:2750,   B:2750},
+  rafting:      {A:11220,  B:14960},
+  alas_harum:   {A:4125,   B:5500},
+  waterbom:     {A:7871,   B:10000},
+  entrance:     {A:13885,  B:17908},
+  misc:         {A:7500,   B:7500},
 };
 
 // ===== STATE =====
-// Rows that are booked/paid — same in Budget & Actual views
 const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','airport1','airport2','driver'];
 
-const STORE_KEY = 'bali_trip_2026_v8';
-let state = loadState();
+let state = null;
 let currentDay = 0;
 let addCurrency = 'INR';
-let viewMode = 'budget'; // 'budget' or 'actual'
+let viewMode = 'budget';
+let isReady = false;
 
-function loadState(){
-  try{
-    const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if(s && s.version === 8){
-      if(!s.customRows) s.customRows = [];
-      if(!s.payments) s.payments = [];
-      if(!s.splitOverrides) s.splitOverrides = {};
-      if(!s.rowLabels) s.rowLabels = {};
-      return s;
-    }
-  }catch(e){}
-  // Initialize with pre-seeded estimates
+function defaultState(){
   const data = {};
   ROWS.forEach(r => { data[r.key] = SEED_DATA[r.key] ? {...SEED_DATA[r.key]} : {A:0, B:0}; });
   return {version:8, data, expenses:[], toggledOff:[], customRows:[], splitOverrides:{}, rowLabels:{}, payments:[
     {id:1, amount:80000, date:'Pre-trip', note:'Advance payment'}
   ]};
 }
-function save(){ state.lastUpdated = new Date().toISOString(); localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+// ===== FIREBASE SYNC =====
+let saving = false;
+
+function save(){
+  if(!state || saving) return;
+  state.lastUpdated = new Date().toISOString();
+  saving = true;
+  tripRef.set(state).then(() => {
+    saving = false;
+  }).catch(err => {
+    console.error('Save failed:', err);
+    saving = false;
+  });
+}
+
+// Initialize: load from Firestore or create new trip
+async function init(){
+  try {
+    const doc = await tripRef.get();
+    if(doc.exists){
+      state = doc.data();
+      if(!state.customRows) state.customRows = [];
+      if(!state.payments) state.payments = [];
+      if(!state.splitOverrides) state.splitOverrides = {};
+      if(!state.rowLabels) state.rowLabels = {};
+      if(!state.expenses) state.expenses = [];
+      if(!state.toggledOff) state.toggledOff = [];
+    } else {
+      state = defaultState();
+      await tripRef.set(state);
+    }
+  } catch(err) {
+    console.warn('Firestore load failed, using defaults:', err);
+    state = defaultState();
+  }
+
+  isReady = true;
+  switchTab('dashboard');
+  updateSyncStatus(true);
+
+  // Listen for real-time updates from other devices
+  tripRef.onSnapshot(doc => {
+    if(!doc.exists || saving) return;
+    const newState = doc.data();
+    if(!newState) return;
+    // Only update if the change came from another device
+    if(newState.lastUpdated !== state.lastUpdated){
+      if(!newState.customRows) newState.customRows = [];
+      if(!newState.payments) newState.payments = [];
+      if(!newState.splitOverrides) newState.splitOverrides = {};
+      if(!newState.rowLabels) newState.rowLabels = {};
+      if(!newState.expenses) newState.expenses = [];
+      if(!newState.toggledOff) newState.toggledOff = [];
+      state = newState;
+      // Re-render current tab
+      const activeTab = document.querySelector('.tabs button.active')?.dataset.tab || 'dashboard';
+      switchTab(activeTab);
+    }
+    updateSyncStatus(true);
+  }, err => {
+    console.warn('Snapshot error:', err);
+    updateSyncStatus(false);
+  });
+}
+
+function updateSyncStatus(online){
+  const dot = document.querySelector('.sync-dot');
+  if(dot){
+    dot.className = 'sync-dot ' + (online ? 'online' : 'offline');
+  }
+}
+
+function shareTrip(){
+  const url = location.origin + location.pathname + '#' + TRIP_ID + '/view';
+  if(navigator.share){
+    navigator.share({title:'Bali Trip 2026', text:'View our Bali trip expenses', url}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url).then(()=>{
+      alert('View-only link copied! Send it to Sathiya.');
+    }).catch(()=>{
+      prompt('Copy this link:', url);
+    });
+  }
+}
 
 // ===== HELPERS =====
-const inr = v => '₹' + Math.round(v).toLocaleString('en-IN');
+const inr = v => '\u20B9' + Math.round(v).toLocaleString('en-IN');
 const idrF = v => 'IDR ' + Math.round(v).toLocaleString('en-ID');
 const toINR = idr => idr / XR;
 
@@ -364,7 +487,7 @@ function getActualRowData(){
 }
 
 function getDisplayData(){
-  return viewMode==='actual' ? getActualRowData() : null; // null = use state.data
+  return viewMode==='actual' ? getActualRowData() : null;
 }
 
 function getRowTotals(data){
@@ -386,6 +509,7 @@ function getSettlement(data){
 
 // ===== RENDERING =====
 function switchTab(tab){
+  if(!isReady) return;
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.tabs button').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
@@ -399,10 +523,11 @@ function switchTab(tab){
 function updateHeader(){
   const s = getSettlement();
   const el = document.getElementById('headerSettle');
-  if(s.sT===0){ el.textContent='No expenses yet'; return; }
-  if(Math.abs(s.balaOwes)<1){ el.textContent='All settled up!'; return; }
-  if(s.balaOwes>0) el.textContent=`Bala owes you ${inr(s.balaOwes)}`;
-  else el.textContent=`You owe Bala ${inr(-s.balaOwes)}`;
+  const dot = '<span class="sync-dot online"></span>';
+  if(s.sT===0){ el.innerHTML=dot+'No expenses yet'; return; }
+  if(Math.abs(s.balaOwes)<1){ el.innerHTML=dot+'All settled up!'; return; }
+  if(s.balaOwes>0) el.innerHTML=dot+`Sathiya owes you ${inr(s.balaOwes)}`;
+  else el.innerHTML=dot+`You owe Sathiya ${inr(-s.balaOwes)}`;
 }
 
 function setView(mode){ viewMode=mode; renderDashboard(); }
@@ -426,7 +551,7 @@ function renderDashboard(){
     const isBooked = BOOKED_ROWS.includes(r.key);
     tableRows += `
       <tr class="${isEmpty?'empty':''} clickable" onclick="${isActual&&!isBooked?'':'editRow(\''+r.key+'\')'}">
-        <td>${rowLabel(r.key)}${isCustom?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">✕</span>':''}</td>
+        <td>${rowLabel(r.key)}${isCustom?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">x</span>':''}</td>
         <td class="n a">${a?a.toLocaleString('en-IN'):''}</td>
         <td class="n b">${b?b.toLocaleString('en-IN'):''}</td>
         <td class="n t">${t?t.toLocaleString('en-IN'):''}</td>
@@ -443,7 +568,7 @@ function renderDashboard(){
         <tr>
           <th style="text-align:left">Expense</th>
           <th>Senthil</th>
-          <th>Bala</th>
+          <th>Sathiya</th>
           <th>Total</th>
         </tr>
         ${tableRows}
@@ -455,30 +580,30 @@ function renderDashboard(){
         </tr>
       </table>
     </div>
-    <button onclick="showAddRow()" style="width:100%;padding:12px;border:1.5px dashed var(--primary);border-radius:10px;background:transparent;color:var(--primary);font-weight:600;font-size:.9rem;cursor:pointer;margin-bottom:10px">+ Add Row</button>
+    <button class="edit-only" onclick="showAddRow()" style="width:100%;padding:12px;border:1.5px dashed var(--primary);border-radius:10px;background:transparent;color:var(--primary);font-weight:600;font-size:.9rem;cursor:pointer;margin-bottom:10px">+ Add Row</button>
     <div class="card">
-      <h3>Payments from Bala</h3>
+      <h3>Payments from Sathiya</h3>
       ${(state.payments||[]).length===0?'<div style="font-size:.85rem;color:var(--muted);padding:4px 0">No payments received yet</div>':''}
       ${(state.payments||[]).map(p=>`
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
           <div>
             <div style="font-size:.9rem;font-weight:500">${inr(p.amount)}</div>
-            <div style="font-size:.7rem;color:var(--muted)">${p.date}${p.note?' — '+p.note:''}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${p.date}${p.note?' - '+p.note:''}</div>
           </div>
-          <button class="del-btn" onclick="delPayment(${p.id})">Delete</button>
+          <button class="del-btn edit-only" onclick="delPayment(${p.id})">Delete</button>
         </div>`).join('')}
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <input id="pay-amt" type="number" inputmode="numeric" placeholder="Amount ₹" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
+      <div class="edit-only" style="margin-top:8px;display:flex;gap:8px">
+        <input id="pay-amt" type="number" inputmode="numeric" placeholder="Amount" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem">
         <button onclick="addPayment()" style="padding:10px 16px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;font-size:.9rem;cursor:pointer">Add</button>
       </div>
     </div>
     <div class="settle-box">
       ${sT===0?'Add expenses to see settlement':
         Math.abs(s.balaOwes)<1?'All settled up!':
-        s.balaOwes>0?`Bala still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Bala <strong>${inr(-s.balaOwes)}</strong>`}
-      ${s.balaShare>0?`<div style="font-size:.8rem;font-weight:400;margin-top:6px">Bala's share: ${inr(s.balaShare)} · Received: ${inr(s.balaReceived)}</div>`:''}
+        s.balaOwes>0?`Sathiya still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Sathiya <strong>${inr(-s.balaOwes)}</strong>`}
+      ${s.balaShare>0?`<div style="font-size:.8rem;font-weight:400;margin-top:6px">Sathiya's share: ${inr(s.balaShare)} - Received: ${inr(s.balaReceived)}</div>`:''}
     </div>
-    <div style="text-align:center;margin-top:12px;font-size:.75rem;color:var(--muted)">Tap any row to edit</div>
+    <div class="edit-only" style="text-align:center;margin-top:12px;font-size:.75rem;color:var(--muted)">Tap any row to edit</div>
   `;
 }
 
@@ -486,6 +611,7 @@ function renderDashboard(){
 let editingRow = null;
 
 function editRow(key){
+  if(VIEW_ONLY) return;
   editingRow = key;
   const row = allRows().find(r=>r.key===key);
   const d = state.data[key] || {A:0,B:0};
@@ -510,11 +636,11 @@ function editRow(key){
         ${isOwn?`
           <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px">Each family's own cost</p>
           <div class="form-group">
-            <label>Senthil (₹)</label>
+            <label>Senthil (INR)</label>
             <input id="edit-a" type="number" inputmode="numeric" value="${a}" placeholder="0" style="font-size:1.1rem">
           </div>
           <div class="form-group">
-            <label>Bala (₹)</label>
+            <label>Sathiya (INR)</label>
             <input id="edit-b" type="number" inputmode="numeric" value="${b}" placeholder="0" style="font-size:1.1rem">
           </div>
         `:`
@@ -527,7 +653,7 @@ function editRow(key){
             </div>
           </div>
           <div class="form-group">
-            <label>Total Amount (₹)</label>
+            <label>Total Amount (INR)</label>
             <input id="edit-total" type="number" inputmode="numeric" value="${total||''}" placeholder="0" style="font-size:1.1rem" oninput="showSplitPreview()">
           </div>
           <div id="splitPreview" style="font-size:.85rem;color:var(--muted);margin-bottom:14px"></div>
@@ -603,7 +729,6 @@ function delPayment(id){
 }
 
 function saveEdit(isShared){
-  // Save rename if name field exists
   const nameEl = document.getElementById('edit-name');
   if(nameEl){
     const newName = nameEl.value.trim();
@@ -615,11 +740,9 @@ function saveEdit(isShared){
   if(isShared){
     const total = parseFloat(document.getElementById('edit-total').value) || 0;
     const sp = document.querySelector('input[name="editSplit"]:checked').value;
-    // Save split override
     if(!state.splitOverrides) state.splitOverrides = {};
     state.splitOverrides[editingRow] = sp;
     if(sp === 'per-person'){
-      // Per person: multiply by each family's headcount
       const sA = Math.round(total * FAM.A.pax);
       const sB = Math.round(total * FAM.B.pax);
       state.data[editingRow] = {A: sA, B: sB};
@@ -646,19 +769,19 @@ function showSplitPreview(){
   const v = parseFloat(totalEl.value) || 0;
   const sp = document.querySelector('input[name="editSplit"]:checked')?.value || '50-50';
   if(sp === 'per-person'){
-    if(labelEl) labelEl.textContent = 'Per Person Price (₹)';
+    if(labelEl) labelEl.textContent = 'Per Person Price (INR)';
     if(v){
       const sA = Math.round(v * FAM.A.pax);
       const sB = Math.round(v * FAM.B.pax);
       el.style.display='block';
-      el.innerHTML = `Senthil: ${inr(sA)} (${FAM.A.pax} pax) · Bala: ${inr(sB)} (${FAM.B.pax} pax)<br>Total: ${inr(sA+sB)}`;
+      el.innerHTML = `Senthil: ${inr(sA)} (${FAM.A.pax} pax) - Sathiya: ${inr(sB)} (${FAM.B.pax} pax)<br>Total: ${inr(sA+sB)}`;
     } else { el.style.display='none'; }
   } else {
-    if(labelEl) labelEl.textContent = 'Total Amount (₹)';
+    if(labelEl) labelEl.textContent = 'Total Amount (INR)';
     if(v){
       const r = splitRatio(sp);
       el.style.display='block';
-      el.textContent = `Senthil: ${inr(v * r.A / r.T)} · Bala: ${inr(v * r.B / r.T)}`;
+      el.textContent = `Senthil: ${inr(v * r.A / r.T)} - Sathiya: ${inr(v * r.B / r.T)}`;
     } else { el.style.display='none'; }
   }
 }
@@ -673,7 +796,6 @@ function renderAdd(){
   updateHeader();
   const today = new Date().toISOString().slice(0,10);
   const dateVal = DATES.includes(today)?today:DATES[0];
-  // Category dropdown built from ROWS
   const catOpts = allRows().filter(r=>!r.fixed).map(r=>`<option value="${r.key}">${rowLabel(r.key)}</option>`).join('');
 
   document.getElementById('tab-add').innerHTML = `
@@ -687,7 +809,7 @@ function renderAdd(){
         <div class="form-group">
           <label>Amount</label>
           <div class="currency-toggle" style="margin-bottom:8px">
-            <button type="button" class="${addCurrency==='INR'?'active':''}" onclick="setCur('INR')">INR ₹</button>
+            <button type="button" class="${addCurrency==='INR'?'active':''}" onclick="setCur('INR')">INR</button>
             <button type="button" class="${addCurrency==='IDR'?'active':''}" onclick="setCur('IDR')">IDR</button>
           </div>
           <input id="f-amount" type="number" inputmode="numeric" placeholder="${addCurrency==='INR'?'e.g. 2500':'e.g. 450000'}" required>
@@ -697,14 +819,14 @@ function renderAdd(){
           <label>Paid By</label>
           <div class="radio-row">
             <div><input type="radio" name="paidBy" id="pay-a" value="A" checked><label for="pay-a">Senthil</label></div>
-            <div><input type="radio" name="paidBy" id="pay-b" value="B"><label for="pay-b">Bala</label></div>
+            <div><input type="radio" name="paidBy" id="pay-b" value="B"><label for="pay-b">Sathiya</label></div>
           </div>
         </div>
         <div class="form-group">
           <label>Note (optional)</label>
           <input id="f-note" type="text" placeholder="e.g. Lunch at Warung Babi Guling">
         </div>
-        <button type="submit" class="btn">Add to ${addCurrency==='INR'?'₹':'IDR'} Total</button>
+        <button type="submit" class="btn">Add Expense</button>
       </form>
     </div>
     <div class="card">
@@ -731,15 +853,12 @@ function submitExpense(e){
   const cat = document.getElementById('f-cat').value;
   let amt = parseFloat(document.getElementById('f-amount').value);
   if(!amt) return false;
-  // Convert to INR if entered in IDR
   const inrAmt = addCurrency==='IDR' ? Math.round(amt/XR) : Math.round(amt);
   const paidBy = document.querySelector('input[name="paidBy"]:checked').value;
   const note = document.getElementById('f-note').value;
 
-  // Add to the row total
   state.data[cat][paidBy] = (state.data[cat][paidBy]||0) + inrAmt;
 
-  // Also log it for history
   state.expenses.push({
     id: Date.now(),
     cat, amount: inrAmt, paidBy, note,
@@ -748,7 +867,6 @@ function submitExpense(e){
   });
   save();
 
-  // Show confirmation & reset
   renderAdd();
   const card = document.querySelector('#tab-add .card');
   const msg = document.createElement('div');
@@ -769,15 +887,15 @@ function renderRecent(){
     return `<div class="expense-item">
       <div class="row">
         <div>
-          <div class="desc">${row?rowLabel(e.cat):e.cat}${e.note?' — '+e.note:''}</div>
+          <div class="desc">${row?rowLabel(e.cat):e.cat}${e.note?' - '+e.note:''}</div>
           <div class="meta">
-            <span class="chip ${e.paidBy==='A'?'chip-a':'chip-b'}">${e.paidBy==='A'?'Senthil':'Bala'}</span>
+            <span class="chip ${e.paidBy==='A'?'chip-a':'chip-b'}">${e.paidBy==='A'?'Senthil':'Sathiya'}</span>
             <span style="font-size:.7rem">${e.date} ${e.time||''}</span>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="amt">${inr(e.amount)}</span>
-          <button class="del-btn" onclick="undoExpense(${e.id})">Undo</button>
+          <button class="del-btn edit-only" onclick="undoExpense(${e.id})">Undo</button>
         </div>
       </div>
     </div>`;
@@ -788,7 +906,6 @@ function undoExpense(id){
   const exp = state.expenses.find(e=>e.id===id);
   if(!exp) return;
   if(!confirm(`Undo ${inr(exp.amount)} from ${rowLabel(exp.cat)}?`)) return;
-  // Subtract from row
   state.data[exp.cat][exp.paidBy] = Math.max(0, (state.data[exp.cat][exp.paidBy]||0) - exp.amount);
   state.expenses = state.expenses.filter(e=>e.id!==id);
   save(); renderAdd();
@@ -814,8 +931,8 @@ function renderDays(){
       itinHTML += `
         <div class="itin-item" style="${off?'opacity:.35;text-decoration:line-through':''}">
           <div>
-            <div class="name">${item.optional?'⟡ ':''}${item.name}</div>
-            <div style="font-size:.7rem;color:var(--muted)">${idrF(item.idr)}${item.perType?' / person':''} · ${item.split==='50-50'?'50-50':item.perType==='adult'?'per adult':item.perType==='kid'?'per kid':'per person'}</div>
+            <div class="name">${item.optional?'* ':''}${item.name}</div>
+            <div style="font-size:.7rem;color:var(--muted)">${idrF(item.idr)}${item.perType?' / person':''} - ${item.split==='50-50'?'50-50':item.perType==='adult'?'per adult':item.perType==='kid'?'per kid':'per person'}</div>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span class="cost">${inr(totalINR)}</span>
@@ -837,7 +954,6 @@ function renderDays(){
   const date = DATES[di];
   const dayExpenses = state.expenses.filter(e=>e.date===date);
   const dayTotal = dayExpenses.reduce((s,e)=>s+e.amount,0);
-  // Build day-specific dropdown: group by base name, then general categories
   const dayItems = (ITINERARY[di]?.items || []);
   const seenBases = {};
   const dayGroupedOpts = [];
@@ -858,12 +974,12 @@ function renderDays(){
       const row = allRows().find(r=>r.key===e.cat);
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
         <div>
-          <div style="font-size:.9rem;font-weight:500">${row?rowLabel(e.cat):e.cat}${e.note?' — '+e.note:''}</div>
-          <div style="font-size:.7rem;color:var(--muted)">${e.time||''}${e.paidBy==='B'?' · <span class="chip chip-b">Bala paid</span>':''}</div>
+          <div style="font-size:.9rem;font-weight:500">${row?rowLabel(e.cat):e.cat}${e.note?' - '+e.note:''}</div>
+          <div style="font-size:.7rem;color:var(--muted)">${e.time||''}${e.paidBy==='B'?' - <span class="chip chip-b">Sathiya paid</span>':''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-weight:700;font-size:.9rem">${inr(e.amount)}</span>
-          <button class="del-btn" onclick="undoDayExp(${e.id})">✕</button>
+          <button class="del-btn edit-only" onclick="undoDayExp(${e.id})">x</button>
         </div>
       </div>`;
     }).join('');
@@ -874,26 +990,25 @@ function renderDays(){
     <div style="font-weight:700;font-size:1rem;margin-bottom:4px">${dayInfo.title}</div>
     <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${dayInfo.driver?'Driver: YES':'Driver: NO'}</div>
     <div class="card">
-      <h3>Actual Spend — ${date.slice(5)}${dayTotal>0?' — '+inr(dayTotal):''}</h3>
+      <h3>Actual Spend - ${date.slice(5)}${dayTotal>0?' - '+inr(dayTotal):''}</h3>
       ${expHTML || '<div style="font-size:.85rem;color:var(--muted);padding:4px 0">No expenses yet</div>'}
-      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <div class="edit-only" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <select id="day-cat" onchange="toggleOtherInput()" style="flex:1;min-width:100px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;background:#fff">${catOpts}</select>
-        <input id="day-amt" type="number" inputmode="numeric" placeholder="₹" style="width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
+        <input id="day-amt" type="number" inputmode="numeric" placeholder="INR" style="width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
         <input id="day-note" type="text" placeholder="Note" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">
         <button onclick="addDayExp(${di})" style="padding:8px 14px;border:none;border-radius:8px;background:var(--primary);color:#fff;font-weight:600;font-size:.85rem;cursor:pointer">+</button>
       </div>
-      <div style="margin-top:6px;display:flex;gap:6px;align-items:center">
+      <div class="edit-only" style="margin-top:6px;display:flex;gap:6px;align-items:center">
         <span style="font-size:.75rem;color:var(--muted)">Paid by:</span>
         <button id="day-payer-btn" onclick="toggleDayPayer()" style="padding:4px 12px;border:1.5px solid var(--fam-a);border-radius:6px;background:#dbeafe;color:var(--fam-a);font-size:.75rem;font-weight:600;cursor:pointer">Senthil</button>
       </div>
-      <input id="day-other-name" type="text" placeholder="Item name (e.g. Shopping, Market)" style="display:none;width:100%;margin-top:6px;padding:8px;border:1.5px solid var(--primary);border-radius:8px;font-size:.85rem">
+      <input class="edit-only" id="day-other-name" type="text" placeholder="Item name (e.g. Shopping, Market)" style="display:none;width:100%;margin-top:6px;padding:8px;border:1.5px solid var(--primary);border-radius:8px;font-size:.85rem">
     </div>
     <div class="card">
       <h3>Itinerary</h3>
       ${itinListHTML}
     </div>
     ${dayData.items.length>0?(()=>{
-      // Group items by base name (strip " (Adult)"/" (Kid)" suffix)
       const groups = {};
       dayData.items.forEach(item=>{
         const base = item.name.replace(/ \(Adult\)$| \(Kid\)$/,'');
@@ -913,19 +1028,18 @@ function renderDays(){
         const actExp = dayExpenses.filter(e=>g.names.includes(e.note) || e.note===base);
         const actTotal = actExp.reduce((s,e)=>s+e.amount,0);
         return `<tr style="${g.off?'opacity:.35;text-decoration:line-through':''}">
-          <td style="font-size:.8rem">${g.optional?'⟡ ':''}${base}</td>
+          <td style="font-size:.8rem">${g.optional?'* ':''}${base}</td>
           <td class="n" style="font-size:.8rem;color:var(--muted)">${inr(g.est)}</td>
           <td class="n" style="font-size:.8rem;color:${actTotal?'var(--primary)':'var(--border)'}">
-            ${actTotal?inr(actTotal):'—'}</td>
+            ${actTotal?inr(actTotal):'-'}</td>
         </tr>`;
       }).join('');
-      // Unmatched expenses (not tied to any estimated item)
       const allNames = dayData.items.map(it=>it.name);
       const allBases = [...new Set(dayData.items.map(it=>it.name.replace(/ \(Adult\)$| \(Kid\)$/,'')))];
       const unmatched = dayExpenses.filter(e=>!allNames.includes(e.note) && !allBases.includes(e.note));
       const unmatchedRows = unmatched.map(e=>`<tr>
         <td style="font-size:.8rem">${e.note||rowLabel(e.cat)}</td>
-        <td class="n" style="font-size:.8rem;color:var(--border)">—</td>
+        <td class="n" style="font-size:.8rem;color:var(--border)">-</td>
         <td class="n" style="font-size:.8rem;color:var(--primary)">${inr(e.amount)}</td>
       </tr>`).join('');
       return `<div class="card"><h3>Estimated vs Actual</h3>
@@ -945,7 +1059,7 @@ function toggleDayPayer(){
   dayPayer = dayPayer==='A'?'B':'A';
   const btn = document.getElementById('day-payer-btn');
   if(btn){
-    btn.textContent = dayPayer==='A'?'Senthil':'Bala';
+    btn.textContent = dayPayer==='A'?'Senthil':'Sathiya';
     btn.style.borderColor = dayPayer==='A'?'var(--fam-a)':'var(--fam-b)';
     btn.style.background = dayPayer==='A'?'#dbeafe':'#ede9fe';
     btn.style.color = dayPayer==='A'?'var(--fam-a)':'var(--fam-b)';
@@ -965,11 +1079,9 @@ function addDayExp(di){
   let note = document.getElementById('day-note').value;
   const inrAmt = Math.round(amt);
 
-  // Handle "Other" — create a custom row
   if(cat === '__other'){
     const otherName = (document.getElementById('day-other-name')?.value||'').trim();
     if(!otherName){ alert('Enter item name'); return; }
-    // Find or create a custom row for this name
     const existingKey = state.customRows.find(r=>(state.rowLabels[r.key]||r.label)===otherName)?.key;
     if(existingKey){
       cat = existingKey;
@@ -981,7 +1093,6 @@ function addDayExp(di){
     if(!note) note = otherName;
   }
 
-  // If selecting a day-specific item, map to the right category
   let itemName = '';
   if(cat.startsWith('__day_')){
     const idx = parseInt(cat.replace('__day_',''));
@@ -989,12 +1100,10 @@ function addDayExp(di){
     const item = dayItems[idx];
     if(!item){ alert('Item not found'); return; }
     itemName = item.name.replace(/ \(Adult\)$| \(Kid\)$/,'');
-    // Map to the correct Home tab row
     cat = item.rowKey || (item.cat === 'driver' ? 'taxi' : 'entrance');
     if(!note) note = itemName;
   }
 
-  // Add to row total (Senthil pays everything)
   if(!state.data[cat]) state.data[cat] = {A:0,B:0};
   const sp = getRowSplit(cat);
   if(sp === 'own'){
@@ -1005,7 +1114,6 @@ function addDayExp(di){
     state.data[cat].A += aShare;
     state.data[cat].B += (inrAmt - aShare);
   }
-  // Log expense
   state.expenses.push({
     id: Date.now(), cat, amount: inrAmt, paidBy: dayPayer, note,
     date: DATES[di],
@@ -1018,7 +1126,6 @@ function undoDayExp(id){
   const exp = state.expenses.find(e=>e.id===id);
   if(!exp) return;
   if(!confirm(`Remove ${inr(exp.amount)}?`)) return;
-  // Reverse from row total
   const sp = getRowSplit(exp.cat);
   if(sp === 'own'){
     state.data[exp.cat].A = Math.max(0, (state.data[exp.cat].A||0) - exp.amount);
@@ -1044,7 +1151,6 @@ function renderSettle(){
   const s = getSettlement();
   const {sA,sB,sT} = getRowTotals();
 
-  // Build per-row settlement breakdown
   let breakdownHTML = '';
   allRows().forEach(r=>{
     const a = (state.data[r.key]||{}).A || 0;
@@ -1073,7 +1179,7 @@ function renderSettle(){
     <div class="settle-box" style="margin-bottom:12px">
       ${sT===0?'No expenses yet':
         Math.abs(s.balaOwes)<1?'All settled up!':
-        s.balaOwes>0?`Bala still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Bala <strong>${inr(-s.balaOwes)}</strong>`}
+        s.balaOwes>0?`Sathiya still owes you <strong>${inr(s.balaOwes)}</strong>`:`You owe Sathiya <strong>${inr(-s.balaOwes)}</strong>`}
     </div>
     <div class="card">
       <h3>Summary</h3>
@@ -1081,9 +1187,9 @@ function renderSettle(){
         <tr><th style="text-align:left"></th><th>Amount</th></tr>
         <tr><td>Total trip cost</td><td class="n">${inr(s.sT)}</td></tr>
         <tr><td>Senthil's share</td><td class="n a">${inr(s.sA)}</td></tr>
-        <tr><td>Bala's share</td><td class="n b">${inr(s.sB)}</td></tr>
-        <tr><td>Bala paid so far</td><td class="n" style="color:var(--success)">${inr(s.balaReceived)}</td></tr>
-        <tr class="total-row"><td>Bala still owes</td>
+        <tr><td>Sathiya's share</td><td class="n b">${inr(s.sB)}</td></tr>
+        <tr><td>Sathiya paid so far</td><td class="n" style="color:var(--success)">${inr(s.balaReceived)}</td></tr>
+        <tr class="total-row"><td>Sathiya still owes</td>
           <td class="n" style="color:${s.balaOwes>0?'var(--danger)':'var(--success)'}">${inr(s.balaOwes)}</td>
         </tr>
       </table>
@@ -1096,22 +1202,22 @@ function renderSettle(){
     </div>`:''}
     ${breakdownHTML?`<div class="card"><h3>Cost Breakdown</h3>
       <table class="sheet">
-        <tr><th style="text-align:left">Expense</th><th>Senthil</th><th>Bala</th><th>Split</th></tr>
+        <tr><th style="text-align:left">Expense</th><th>Senthil</th><th>Sathiya</th><th>Split</th></tr>
         ${breakdownHTML}
       </table>
     </div>`:''}
     <button class="export-btn" onclick="exportData()">Copy Report to Clipboard</button>
-    <button class="export-btn" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="clearAll()">Reset All Data</button>
+    <button class="export-btn edit-only" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="clearAll()">Reset All Data</button>
   `;
 }
 
 function exportData(){
   const s = getSettlement();
   const {sA,sB,sT} = getRowTotals();
-  let txt = 'BALI TRIP 2026 — EXPENSE REPORT\n';
+  let txt = 'BALI TRIP 2026 - EXPENSE REPORT\n';
   txt += '================================\n\n';
-  txt += `Bala's share: ${inr(s.balaShare)} | Paid: ${inr(s.balaReceived)} | Owes: ${inr(s.balaOwes)}\n\n`;
-  txt += 'Expense'.padEnd(22) + 'Senthil'.padStart(10) + 'Bala'.padStart(10) + 'Total'.padStart(10) + '\n';
+  txt += `Sathiya's share: ${inr(s.balaShare)} | Paid: ${inr(s.balaReceived)} | Owes: ${inr(s.balaOwes)}\n\n`;
+  txt += 'Expense'.padEnd(22) + 'Senthil'.padStart(10) + 'Sathiya'.padStart(10) + 'Total'.padStart(10) + '\n';
   txt += '-'.repeat(52) + '\n';
   allRows().forEach(r=>{
     const a = (state.data[r.key]||{}).A||0, b = (state.data[r.key]||{}).B||0;
@@ -1130,13 +1236,20 @@ function exportData(){
 function clearAll(){
   if(!confirm('Reset ALL data? This cannot be undone.')) return;
   if(!confirm('Are you really sure?')) return;
-  localStorage.removeItem(STORE_KEY);
-  state = loadState();
+  state = defaultState();
+  save();
   switchTab('dashboard');
 }
 
 // ===== INIT =====
-switchTab('dashboard');
+if(VIEW_ONLY){
+  document.body.classList.add('view-only');
+  // Hide Add tab button
+  document.querySelector('.tabs button[data-tab="add"]').classList.add('edit-only');
+  // Change Share button to View Only badge
+  document.getElementById('shareBtn').outerHTML = '<span class="view-badge">View Only</span>';
+}
+init();
 </script>
 </body>
 </html>

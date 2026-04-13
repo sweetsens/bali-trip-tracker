@@ -190,7 +190,7 @@ const tripRef = db.collection('trips').doc(TRIP_ID);
 const XR = 182; // IDR per INR
 const FAM = {A:{adults:2,kids:1,pax:3,name:'Senthil'},B:{adults:2,kids:2,pax:4,name:'Sathiya'}};
 const DATES = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05'];
-const DAY_LABELS = ['Day 1 - Arrival','Day 2 - Ubud Centre + Waterfalls','Day 3 - Alas Harum Loop','Day 4 - Flex Day','Day 5 - North/West Loop','Day 6 - Rafting + Chill','Day 7 - Transfer + South Bali','Day 8 - Waterbom','Day 9 - Departure'];
+const DAY_LABELS = ['Day 1 - Arrival','Day 2 - Alas Harum + Waterfalls','Day 3 - Kintamani + Penglipuran','Day 4 - North/West Loop','Day 5 - East Bali','Day 6 - Rafting + Chill','Day 7 - Transfer + South Bali','Day 8 - Waterbom','Day 9 - Departure'];
 
 const DAY_ITIN = [
   {title:'Sun 27 Apr - ARRIVAL', driver:false, items:[
@@ -198,31 +198,37 @@ const DAY_ITIN = [
     'Drive to Ubud (~1.5 hrs)',
     'Check in & rest',
   ]},
-  {title:'Mon 28 Apr - UBUD CENTRE + WATERFALLS (Medium)', driver:true, items:[
-    'Ubud Palace (free)',
-    'Ubud Art Market (free)',
-    'Saraswati Temple',
+  {title:'Mon 28 Apr - ALAS HARUM + WATERFALLS (Medium)', driver:true, items:[
+    'OPTIONAL AM: Ubud Palace, Art Market, Saraswati (walkable)',
+    'Pickup ~9-10 AM from villa',
+    'Alas Harum (rice terraces + swings + photos)',
     'Kanto Lampo Waterfall',
     'Tibumana Waterfall',
-    'OPTIONAL: Tirta Empul (if time)',
+    'Lunch',
   ]},
-  {title:'Tue 29 Apr - ALAS HARUM LOOP (Heavy)', driver:true, items:[
-    'Alas Harum (rice terraces + swings)',
-    'OPTIONAL: Kintamani Viewpoint',
+  {title:'Tue 29 Apr - KINTAMANI + PENGLIPURAN (Medium)', driver:true, items:[
+    'Pickup ~8 AM',
+    'Kintamani Viewpoint',
+    'Mount Batur Lava Point',
     'Penglipuran Village',
-    'Back to Champaca',
+    'Lunch + other places around Ubud',
   ]},
-  {title:'Wed 30 Apr - EAST BALI (Flex)', driver:true, items:[
-    'Lahangan Sweet',
-    'Tirta Gangga',
-    'Bukit Cinta (free)',
-  ]},
-  {title:'Thu 1 May - NORTH/WEST LOOP (Heavy)', driver:true, items:[
+  {title:'Wed 30 Apr - NORTH/WEST LOOP (Heavy)', driver:true, items:[
+    'Pickup ~8 AM',
     'Sangeh Monkey Forest',
     'Ulun Danu Beratan Temple',
     'Handara Gate (photo stop)',
     'Wanagiri Hidden Hill (viewpoint)',
     'Jatiluwih Rice Terraces',
+    'Lunch + other places enroute',
+  ]},
+  {title:'Thu 1 May - EAST BALI (Medium)', driver:true, items:[
+    'Pickup ~8 AM',
+    'Lahangan Sweet viewpoint',
+    'Tirta Gangga Water Palace',
+    'Bukit Cinta or hidden gems (flexible)',
+    'OPTIONAL: Tirta Empul (if time)',
+    'Lunch',
   ]},
   {title:'Fri 2 May - RAFTING + CHILL (Medium)', driver:false, items:[
     'Morning: Ayung River Rafting (pickup + lunch included)',
@@ -261,7 +267,7 @@ const ROWS = [
   {key:'food',        label:'Food',                split:'50-50'},
   {key:'waterbom_food',label:'Waterbom Food',      split:'50-50'},
   {key:'rafting',     label:'Rafting',             split:'4:3'},
-  {key:'alas_harum',  label:'Alas Harum',          split:'4:3'},
+  {key:'alas_harum',  label:'Alas Harum',          split:'50-50'},
   {key:'waterbom',    label:'Waterbom',            split:'4:3'},
   {key:'entrance',    label:'Entrance tickets',    split:'4:3'},
   {key:'misc',        label:'Misc',                split:'50-50'},
@@ -287,50 +293,55 @@ function allRows(){
 const ITINERARY = [
   { day:1, items:[] },
   { day:2, items:[
-    {name:'Saraswati Temple',cat:'activity',idr:36400,perType:'all',rowKey:'entrance'},
-    {name:'Kanto Lampo',cat:'activity',idr:20020,perType:'all',rowKey:'entrance'},
-    {name:'Tibumana',cat:'activity',idr:20020,perType:'all',rowKey:'entrance'},
-    {name:'Tirta Empul',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+    {name:'Alas Harum Entry (incl tax)',cat:'activity',idr:74000,perType:'all',rowKey:'alas_harum'},
+    {name:'Alas Harum Activities (swings+photo)',cat:'activity',idr:248000,perType:'all',rowKey:'alas_harum'},
+    {name:'Saraswati (optional, Adult)',cat:'activity',idr:50000,perType:'adult',rowKey:'entrance'},
+    {name:'Saraswati (optional, Kid)',cat:'activity',idr:25000,perType:'kid',rowKey:'entrance'},
+    {name:'Kanto Lampo',cat:'activity',idr:25000,perType:'all',rowKey:'entrance'},
+    {name:'Tibumana',cat:'activity',idr:25000,perType:'all',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:800000,split:'50-50',rowKey:'driver'},
   ]},
   { day:3, items:[
-    {name:'Alas Harum Entry',cat:'activity',idr:50050,perType:'all',rowKey:'alas_harum'},
-    {name:'Alas Harum Swings',cat:'activity',idr:200200,perType:'all',rowKey:'alas_harum'},
-    {name:'Penglipuran (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
-    {name:'Penglipuran (Kid)',cat:'activity',idr:30030,perType:'kid',rowKey:'entrance'},
-    {name:'Kintamani',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+    {name:'Kintamani / Mt Batur (Adult)',cat:'activity',idr:50000,perType:'adult',rowKey:'entrance'},
+    {name:'Kintamani / Mt Batur (Kid)',cat:'activity',idr:30000,perType:'kid',rowKey:'entrance'},
+    {name:'Penglipuran (Adult)',cat:'activity',idr:50000,perType:'adult',rowKey:'entrance'},
+    {name:'Penglipuran (Kid)',cat:'activity',idr:30000,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:800000,split:'50-50',rowKey:'driver'},
   ]},
   { day:4, items:[
-    {name:'Lahangan Sweet',cat:'activity',idr:40040,perType:'all',rowKey:'entrance'},
-    {name:'Tirta Gangga',cat:'activity',idr:70070,perType:'all',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+    {name:'Sangeh Monkey Forest (Adult)',cat:'activity',idr:75000,perType:'adult',rowKey:'entrance'},
+    {name:'Sangeh Monkey Forest (Kid)',cat:'activity',idr:50000,perType:'kid',rowKey:'entrance'},
+    {name:'Ulun Danu Beratan (Adult)',cat:'activity',idr:75000,perType:'adult',rowKey:'entrance'},
+    {name:'Ulun Danu Beratan (Kid)',cat:'activity',idr:50000,perType:'kid',rowKey:'entrance'},
+    {name:'Handara Gate',cat:'activity',idr:50000,perType:'all',rowKey:'entrance'},
+    {name:'Wanagiri Hidden Hill',cat:'activity',idr:100000,perType:'all',rowKey:'entrance'},
+    {name:'Jatiluwih (Adult)',cat:'activity',idr:75000,perType:'adult',rowKey:'entrance'},
+    {name:'Jatiluwih (Kid)',cat:'activity',idr:50000,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:800000,split:'50-50',rowKey:'driver'},
   ]},
   { day:5, items:[
-    {name:'Sangeh Monkey Forest (Adult)',cat:'activity',idr:75166,perType:'adult',rowKey:'entrance'},
-    {name:'Sangeh Monkey Forest (Kid)',cat:'activity',idr:50050,perType:'kid',rowKey:'entrance'},
-    {name:'Ulun Danu Beratan (Adult)',cat:'activity',idr:75166,perType:'adult',rowKey:'entrance'},
-    {name:'Ulun Danu Beratan (Kid)',cat:'activity',idr:50050,perType:'kid',rowKey:'entrance'},
-    {name:'Handara Gate',cat:'activity',idr:50050,perType:'all',rowKey:'entrance'},
-    {name:'Wanagiri Hidden Hill',cat:'activity',idr:100100,perType:'all',rowKey:'entrance'},
-    {name:'Jatiluwih (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
-    {name:'Jatiluwih (Kid)',cat:'activity',idr:30030,perType:'kid',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+    {name:'Lahangan Sweet (entry+shuttle)',cat:'activity',idr:110000,perType:'all',rowKey:'entrance'},
+    {name:'Tirta Gangga (Adult)',cat:'activity',idr:90000,perType:'adult',rowKey:'entrance'},
+    {name:'Tirta Gangga (Kid)',cat:'activity',idr:45000,perType:'kid',rowKey:'entrance'},
+    {name:'Tirta Empul (optional, Adult)',cat:'activity',idr:75000,perType:'adult',rowKey:'entrance'},
+    {name:'Tirta Empul (optional, Kid)',cat:'activity',idr:50000,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:900000,split:'50-50',rowKey:'driver'},
   ]},
   { day:6, items:[
     {name:'Ayung Rafting',cat:'activity',idr:680680,perType:'all',rowKey:'rafting'},
   ]},
   { day:7, items:[
-    {name:'Padang Padang Beach',cat:'activity',idr:10010,perType:'all',rowKey:'entrance'},
-    {name:'Uluwatu Temple (Adult)',cat:'activity',idr:50050,perType:'adult',rowKey:'entrance'},
-    {name:'Uluwatu Temple (Kid)',cat:'activity',idr:25116,perType:'kid',rowKey:'entrance'},
-    {name:'Kecak Fire Dance (Adult)',cat:'activity',idr:150150,perType:'adult',rowKey:'entrance'},
-    {name:'Kecak Fire Dance (Kid)',cat:'activity',idr:100100,perType:'kid',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:764400,split:'50-50',rowKey:'driver'},
+    {name:'Padang Padang Beach (Adult)',cat:'activity',idr:15000,perType:'adult',rowKey:'entrance'},
+    {name:'Padang Padang Beach (Kid)',cat:'activity',idr:10000,perType:'kid',rowKey:'entrance'},
+    {name:'Uluwatu Temple (Adult)',cat:'activity',idr:50000,perType:'adult',rowKey:'entrance'},
+    {name:'Uluwatu Temple (Kid)',cat:'activity',idr:30000,perType:'kid',rowKey:'entrance'},
+    {name:'Kecak Fire Dance (Adult)',cat:'activity',idr:150000,perType:'adult',rowKey:'entrance'},
+    {name:'Kecak Fire Dance (Kid)',cat:'activity',idr:100000,perType:'kid',rowKey:'entrance'},
+    {name:'Driver',cat:'driver',idr:1400000,split:'50-50',rowKey:'driver'},
   ]},
   { day:8, items:[
-    {name:'Waterbom (Adult)',cat:'activity',idr:522522,perType:'adult',rowKey:'waterbom'},
-    {name:'Waterbom (Kid)',cat:'activity',idr:387478,perType:'kid',rowKey:'waterbom'},
+    {name:'Waterbom (Adult)',cat:'activity',idr:566202,perType:'adult',rowKey:'waterbom'},
+    {name:'Waterbom (Kid)',cat:'activity',idr:459368,perType:'kid',rowKey:'waterbom'},
   ]},
   { day:9, items:[] },
 ];
@@ -340,21 +351,21 @@ const SEED_DATA = {
   flight:       {A:93087,  B:124116},
   visa:         {A:8523,   B:11364},
   ubud_hotel:   {A:52500,  B:52500},
-  kuta_hotel:   {A:12500,  B:12500},
+  kuta_hotel:   {A:18000,  B:18000},
   airport1:     {A:3250,   B:3250},
   airport2:     {A:3250,   B:3250},
-  driver:       {A:10500,  B:10500},
-  food:         {A:29250,  B:29250},
+  driver:       {A:12912,  B:12912},
+  food:         {A:42000,  B:42000},
   waterbom_food:{A:2750,   B:2750},
   rafting:      {A:11220,  B:14960},
-  alas_harum:   {A:4125,   B:5500},
-  waterbom:     {A:7871,   B:10000},
-  entrance:     {A:13885,  B:17908},
+  alas_harum:   {A:6184,   B:6184},
+  waterbom:     {A:8746,   B:11270},
+  entrance:     {A:15989,  B:20275},
   misc:         {A:7500,   B:7500},
 };
 
 // ===== STATE =====
-const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','airport1','airport2','driver'];
+const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','driver'];
 
 let state = null;
 let currentDay = 0;
@@ -365,8 +376,11 @@ let isReady = false;
 function defaultState(){
   const data = {};
   ROWS.forEach(r => { data[r.key] = SEED_DATA[r.key] ? {...SEED_DATA[r.key]} : {A:0, B:0}; });
-  return {version:8, data, expenses:[], toggledOff:[], customRows:[], splitOverrides:{}, rowLabels:{}, payments:[
-    {id:1, amount:80000, date:'Pre-trip', note:'Advance payment'}
+  return {version:9, data, expenses:[], toggledOff:[], customRows:[], splitOverrides:{}, rowLabels:{}, payments:[
+    {id:1, amount:80000, date:'Pre-trip', note:'Advance payment 1'},
+    {id:2, amount:50000, date:'Pre-trip', note:'Advance payment 2'},
+    {id:3, amount:70000, date:'Pre-trip', note:'Advance payment 3'},
+    {id:4, amount:10000, date:'Pre-trip', note:'Advance payment 4'}
   ]};
 }
 
@@ -404,6 +418,29 @@ async function init(){
   } catch(err) {
     console.warn('Firestore load failed, using defaults:', err);
     state = defaultState();
+  }
+
+  // Migrate v8 → v9: updated prices, itinerary, payments
+  if(state && (!state.version || state.version < 9)){
+    // Update budget data with new prices
+    state.data.driver       = {A:12912, B:12912};
+    state.data.food         = {A:42000, B:42000};
+    state.data.kuta_hotel   = {A:18000, B:18000};
+    state.data.alas_harum   = {A:6184,  B:6184};
+    state.data.waterbom     = {A:8746,  B:11270};
+    state.data.entrance     = {A:15989, B:20275};
+    // Alas Harum split changed to 50-50
+    if(!state.splitOverrides) state.splitOverrides = {};
+    state.splitOverrides.alas_harum = '50-50';
+    // Update payments
+    state.payments = [
+      {id:1, amount:80000, date:'Pre-trip', note:'Advance payment 1'},
+      {id:2, amount:50000, date:'Pre-trip', note:'Advance payment 2'},
+      {id:3, amount:70000, date:'Pre-trip', note:'Advance payment 3'},
+      {id:4, amount:10000, date:'Pre-trip', note:'Advance payment 4'}
+    ];
+    state.version = 9;
+    save();
   }
 
   isReady = true;

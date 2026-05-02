@@ -460,7 +460,7 @@ function doSave(){
   });
 }
 
-// Initialize: load best available data
+// Initialize: load best available data, recover old trips
 async function init(){
   const localState = loadLocal();
   let fireState = null;
@@ -475,7 +475,6 @@ async function init(){
   // Pick whichever is newer: localStorage or Firestore
   if(fireState && localState){
     state = (localState.lastUpdated > fireState.lastUpdated) ? localState : fireState;
-    // If local was newer, push it to Firestore
     if(localState.lastUpdated > fireState.lastUpdated){
       tripRef.set(state).catch(()=>{});
     }
@@ -487,8 +486,6 @@ async function init(){
     saveLocal();
   } else {
     state = defaultState();
-    saveLocal();
-    tripRef.set(state).catch(()=>{});
   }
 
   if(!state.customRows) state.customRows = [];
@@ -497,6 +494,50 @@ async function init(){
   if(!state.rowLabels) state.rowLabels = {};
   if(!state.expenses) state.expenses = [];
   if(!state.toggledOff) state.toggledOff = [];
+
+  // Recover expenses from old trip IDs (data saved under random hashes)
+  try {
+    const allTrips = await db.collection('trips').get();
+    let recoveredCount = 0;
+    const existingIds = new Set(state.expenses.map(e=>e.id));
+    for(const oldDoc of allTrips.docs){
+      if(oldDoc.id === TRIP_ID) continue;
+      const oldData = oldDoc.data();
+      if(!oldData.expenses || oldData.expenses.length === 0) continue;
+      // Merge expenses that don't already exist
+      for(const exp of oldData.expenses){
+        if(!existingIds.has(exp.id)){
+          state.expenses.push(exp);
+          existingIds.add(exp.id);
+          recoveredCount++;
+        }
+      }
+      // Also merge custom rows
+      if(oldData.customRows){
+        const existingKeys = new Set([...ROWS.map(r=>r.key), ...state.customRows.map(r=>r.key)]);
+        for(const cr of oldData.customRows){
+          if(!existingKeys.has(cr.key)){
+            state.customRows.push(cr);
+            if(oldData.data && oldData.data[cr.key]) state.data[cr.key] = oldData.data[cr.key];
+            existingKeys.add(cr.key);
+          }
+        }
+      }
+      // Merge row labels
+      if(oldData.rowLabels){
+        for(const [k,v] of Object.entries(oldData.rowLabels)){
+          if(!state.rowLabels[k]) state.rowLabels[k] = v;
+        }
+      }
+    }
+    if(recoveredCount > 0){
+      showToast(`Recovered ${recoveredCount} expenses from old data!`, 'ok');
+      saveLocal();
+      tripRef.set(state).catch(()=>{});
+    }
+  } catch(err){
+    console.warn('Recovery scan failed:', err);
+  }
 
   // Migrate v8 → v9: updated prices, itinerary, payments
   if(state && (!state.version || state.version < 9)){

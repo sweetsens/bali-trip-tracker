@@ -390,6 +390,15 @@ function defaultState(){
   ]};
 }
 
+// ===== LOCAL BACKUP (instant, survives refresh) =====
+const LOCAL_KEY = 'bali_trip_' + TRIP_ID;
+function saveLocal(){
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch(e){}
+}
+function loadLocal(){
+  try { const d = localStorage.getItem(LOCAL_KEY); return d ? JSON.parse(d) : null; } catch(e){ return null; }
+}
+
 // ===== FIREBASE SYNC =====
 let saving = false;
 let saveQueued = false;
@@ -409,6 +418,7 @@ function showToast(msg, type){
 function save(){
   if(!state) return;
   state.lastUpdated = new Date().toISOString();
+  saveLocal(); // Instant backup — survives refresh even if Firestore hasn't synced
   if(saving){ saveQueued = true; return; }
   retryCount = 0;
   doSave();
@@ -450,46 +460,43 @@ function doSave(){
   });
 }
 
-// Initialize: load from Firestore or create new trip
+// Initialize: load best available data
 async function init(){
+  const localState = loadLocal();
+  let fireState = null;
+
   try {
     const doc = await tripRef.get();
-    if(doc.exists){
-      state = doc.data();
-    } else {
-      // Check if there's an old trip under a different ID (from before pinning)
-      const oldTrips = await db.collection('trips').orderBy('lastUpdated', 'desc').limit(5).get();
-      let recovered = false;
-      if(!oldTrips.empty){
-        for(const oldDoc of oldTrips.docs){
-          if(oldDoc.id === TRIP_ID) continue;
-          const oldData = oldDoc.data();
-          // Only recover if it has real expenses
-          if(oldData.expenses && oldData.expenses.length > 0){
-            if(confirm(`Found ${oldData.expenses.length} expenses under old trip ID "${oldDoc.id}". Recover this data?`)){
-              state = oldData;
-              await tripRef.set(state);
-              recovered = true;
-              break;
-            }
-          }
-        }
-      }
-      if(!recovered){
-        state = defaultState();
-        await tripRef.set(state);
-      }
-    }
-    if(!state.customRows) state.customRows = [];
-    if(!state.payments) state.payments = [];
-    if(!state.splitOverrides) state.splitOverrides = {};
-    if(!state.rowLabels) state.rowLabels = {};
-    if(!state.expenses) state.expenses = [];
-    if(!state.toggledOff) state.toggledOff = [];
+    if(doc.exists) fireState = doc.data();
   } catch(err) {
-    console.warn('Firestore load failed, using defaults:', err);
-    state = defaultState();
+    console.warn('Firestore load failed:', err);
   }
+
+  // Pick whichever is newer: localStorage or Firestore
+  if(fireState && localState){
+    state = (localState.lastUpdated > fireState.lastUpdated) ? localState : fireState;
+    // If local was newer, push it to Firestore
+    if(localState.lastUpdated > fireState.lastUpdated){
+      tripRef.set(state).catch(()=>{});
+    }
+  } else if(localState){
+    state = localState;
+    tripRef.set(state).catch(()=>{});
+  } else if(fireState){
+    state = fireState;
+    saveLocal();
+  } else {
+    state = defaultState();
+    saveLocal();
+    tripRef.set(state).catch(()=>{});
+  }
+
+  if(!state.customRows) state.customRows = [];
+  if(!state.payments) state.payments = [];
+  if(!state.splitOverrides) state.splitOverrides = {};
+  if(!state.rowLabels) state.rowLabels = {};
+  if(!state.expenses) state.expenses = [];
+  if(!state.toggledOff) state.toggledOff = [];
 
   // Migrate v8 → v9: updated prices, itinerary, payments
   if(state && (!state.version || state.version < 9)){

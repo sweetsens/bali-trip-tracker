@@ -495,85 +495,9 @@ async function init(){
   if(!state.expenses) state.expenses = [];
   if(!state.toggledOff) state.toggledOff = [];
 
-  // Recover data from old trip IDs (data saved under random hashes)
-  try {
-    const allTrips = await db.collection('trips').get();
-    let recoveredCount = 0;
-    let oldDocCount = 0;
-    const existingIds = new Set(state.expenses.map(e=>e.id));
-
-    for(const oldDoc of allTrips.docs){
-      if(oldDoc.id === TRIP_ID) continue;
-      oldDocCount++;
-      const oldData = oldDoc.data();
-
-      // Recover from expenses array
-      if(oldData.expenses && oldData.expenses.length > 0){
-        for(const exp of oldData.expenses){
-          if(!existingIds.has(exp.id)){
-            state.expenses.push(exp);
-            existingIds.add(exp.id);
-            recoveredCount++;
-          }
-        }
-      }
-
-      // Also recover from state.data (old code stored amounts there directly)
-      if(oldData.data){
-        const nonFixed = allRows().filter(r=>!BOOKED_ROWS.includes(r.key));
-        for(const r of nonFixed){
-          const old = oldData.data[r.key];
-          const seed = SEED_DATA[r.key];
-          if(!old) continue;
-          const oldTotal = (old.A||0) + (old.B||0);
-          const seedTotal = seed ? (seed.A||0)+(seed.B||0) : 0;
-          // If old data differs from seed, it had real entries — create synthetic expense
-          if(oldTotal > 0 && oldTotal !== seedTotal){
-            const syntheticId = Math.round(Math.random()*1e12);
-            if(!existingIds.has(syntheticId)){
-              state.expenses.push({
-                id: syntheticId, cat: r.key, amount: oldTotal,
-                paidBy: 'A', note: 'Recovered from old data',
-                date: '2026-04-27', time: '00:00'
-              });
-              existingIds.add(syntheticId);
-              recoveredCount++;
-            }
-          }
-        }
-      }
-
-      // Merge custom rows and labels
-      if(oldData.customRows){
-        const existingKeys = new Set([...ROWS.map(r=>r.key), ...state.customRows.map(r=>r.key)]);
-        for(const cr of oldData.customRows){
-          if(!existingKeys.has(cr.key)){
-            state.customRows.push(cr);
-            if(oldData.data && oldData.data[cr.key]) state.data[cr.key] = oldData.data[cr.key];
-            existingKeys.add(cr.key);
-          }
-        }
-      }
-      if(oldData.rowLabels){
-        for(const [k,v] of Object.entries(oldData.rowLabels)){
-          if(!state.rowLabels[k]) state.rowLabels[k] = v;
-        }
-      }
-    }
-
-    if(recoveredCount > 0){
-      showToast(`Recovered ${recoveredCount} items from ${oldDocCount} old trip(s)!`, 'ok');
-      saveLocal();
-      tripRef.set(state).catch(()=>{});
-    } else if(oldDocCount > 0){
-      showToast(`Found ${oldDocCount} old trip(s) but no new data to recover`, 'fail');
-    } else {
-      showToast('No old trip data found in Firestore', 'fail');
-    }
-  } catch(err){
-    showToast('Recovery failed: ' + err.message, 'fail');
-    console.error('Recovery scan failed:', err);
-  }
+  // Save initial state to both stores
+  saveLocal();
+  tripRef.set(state).catch(()=>{});
 
   // Migrate v8 → v9: updated prices, itinerary, payments
   if(state && (!state.version || state.version < 9)){

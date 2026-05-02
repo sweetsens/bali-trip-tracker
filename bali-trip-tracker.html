@@ -118,6 +118,11 @@ header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
 @keyframes spin{to{transform:rotate(360deg)}}
 body.view-only .edit-only{display:none!important}
 .view-badge{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:6px;font-size:.7rem;font-weight:600}
+.save-toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);
+  padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;
+  z-index:20;transition:opacity .3s;pointer-events:none}
+.save-toast.ok{background:#dcfce7;color:#166534}
+.save-toast.fail{background:#fee2e2;color:#991b1b}
 </style>
 </head>
 <body>
@@ -177,15 +182,14 @@ db.enablePersistence({synchronizeTabs: true}).catch(err => {
 // ===== TRIP ID =====
 const PINNED_TRIP_ID = 'bali2026-senthil';
 function getTripId() {
-  let raw = location.hash.replace('#', '');
-  const isView = raw.endsWith('/view');
-  if (isView) raw = raw.replace('/view', '');
-  // Always use pinned ID if no hash or hash is a random-looking ID
-  if (!raw) {
-    raw = PINNED_TRIP_ID;
-    location.hash = raw;
+  const raw = location.hash.replace('#', '');
+  // View-only: use whatever ID is in the URL
+  if (raw.endsWith('/view')) {
+    return { id: raw.replace('/view', ''), viewOnly: true };
   }
-  return { id: raw, viewOnly: isView };
+  // Owner: ALWAYS use pinned ID, ignore any stale hash
+  location.hash = PINNED_TRIP_ID;
+  return { id: PINNED_TRIP_ID, viewOnly: false };
 }
 const { id: TRIP_ID, viewOnly: VIEW_ONLY } = getTripId();
 const tripRef = db.collection('trips').doc(TRIP_ID);
@@ -390,11 +394,23 @@ function defaultState(){
 let saving = false;
 let saveQueued = false;
 let saveTimer = null;
+let retryCount = 0;
+
+function showToast(msg, type){
+  let t = document.getElementById('saveToast');
+  if(!t){ t=document.createElement('div'); t.id='saveToast'; t.className='save-toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = 'save-toast ' + type;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.style.opacity='0'; }, type==='fail'?4000:1500);
+}
 
 function save(){
   if(!state) return;
   state.lastUpdated = new Date().toISOString();
   if(saving){ saveQueued = true; return; }
+  retryCount = 0;
   doSave();
 }
 
@@ -402,29 +418,35 @@ function doSave(){
   saving = true;
   saveQueued = false;
   updateSyncStatus('saving');
-  // Safety timeout: if save doesn't complete in 8s, unlock and retry
+  // Safety timeout: if save doesn't complete in 10s, unlock and retry
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     console.warn('Save timed out, retrying...');
     saving = false;
     updateSyncStatus('offline');
-    doSave();
-  }, 8000);
+    if(retryCount < 3){ retryCount++; doSave(); }
+    else showToast('Save failed - check wifi', 'fail');
+  }, 10000);
 
   tripRef.set(state).then(() => {
     clearTimeout(saveTimer);
     saving = false;
+    retryCount = 0;
     updateSyncStatus('online');
+    showToast('Saved', 'ok');
     if(saveQueued) doSave();
   }).catch(err => {
     clearTimeout(saveTimer);
     console.error('Save failed:', err);
     saving = false;
     updateSyncStatus('offline');
-    // Retry once after 2s on failure
-    setTimeout(() => {
-      if(!saving) doSave();
-    }, 2000);
+    if(retryCount < 3){
+      retryCount++;
+      showToast('Retrying save...', 'fail');
+      setTimeout(() => { if(!saving) doSave(); }, 2000);
+    } else {
+      showToast('Save failed - check wifi', 'fail');
+    }
   });
 }
 

@@ -29,7 +29,9 @@ header .settle-bar{font-size:.85rem;margin-top:6px;opacity:.9}
 .share-btn:active{background:rgba(255,255,255,.3)}
 .sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .sync-dot.online{background:#22c55e}
+.sync-dot.saving{background:#eab308;animation:pulse 1s ease-in-out infinite}
 .sync-dot.offline{background:#f97316}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;
   display:flex;border-top:1px solid var(--border);z-index:10;
   max-width:480px;margin:0 auto}
@@ -173,12 +175,14 @@ db.enablePersistence({synchronizeTabs: true}).catch(err => {
 });
 
 // ===== TRIP ID =====
+const PINNED_TRIP_ID = 'bali2026-senthil';
 function getTripId() {
   let raw = location.hash.replace('#', '');
   const isView = raw.endsWith('/view');
   if (isView) raw = raw.replace('/view', '');
+  // Always use pinned ID if no hash or hash is a random-looking ID
   if (!raw) {
-    raw = Math.random().toString(36).substring(2, 10);
+    raw = PINNED_TRIP_ID;
     location.hash = raw;
   }
   return { id: raw, viewOnly: isView };
@@ -190,7 +194,7 @@ const tripRef = db.collection('trips').doc(TRIP_ID);
 const XR = 182; // IDR per INR
 const FAM = {A:{adults:2,kids:1,pax:3,name:'Senthil'},B:{adults:2,kids:2,pax:4,name:'Sathiya'}};
 const DATES = ['2026-04-27','2026-04-28','2026-04-29','2026-04-30','2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05'];
-const DAY_LABELS = ['Day 1 - Arrival','Day 2 - Alas Harum + Waterfalls','Day 3 - Kintamani + Penglipuran','Day 4 - North/West Loop','Day 5 - East Bali','Day 6 - Rafting + Chill','Day 7 - Transfer + South Bali','Day 8 - Waterbom','Day 9 - Departure'];
+const DAY_LABELS = ['Day 1 - Arrival','Day 2 - Alas Harum + Waterfalls','Day 3 - Kintamani + Penglipuran','Day 4 - North/West Loop','Day 5 - Rafting','Day 6 - Bali Zoo + Ubud','Day 7 - Transfer + South Bali','Day 8 - Waterbom','Day 9 - Departure'];
 
 const DAY_ITIN = [
   {title:'Sun 27 Apr - ARRIVAL', driver:false, items:[
@@ -222,17 +226,17 @@ const DAY_ITIN = [
     'Jatiluwih Rice Terraces',
     'Lunch + other places enroute',
   ]},
-  {title:'Thu 1 May - EAST BALI (Medium)', driver:true, items:[
-    'Pickup ~8 AM',
-    'Lahangan Sweet viewpoint',
-    'Tirta Gangga Water Palace',
-    'Bukit Cinta or hidden gems (flexible)',
-    'OPTIONAL: Tirta Empul (if time)',
-    'Lunch',
-  ]},
-  {title:'Fri 2 May - RAFTING + CHILL (Medium)', driver:false, items:[
+  {title:'Thu 1 May - RAFTING (Medium)', driver:false, items:[
     'Morning: Ayung River Rafting (pickup + lunch included)',
     'Afternoon: Chill, pool',
+    'Lunch',
+  ]},
+  {title:'Fri 2 May - BALI ZOO + UBUD (Medium)', driver:false, items:[
+    'Bali Zoo',
+    'Ubud Palace',
+    'Saraswati Temple',
+    'Ubud Art Market',
+    'Lunch',
     'Evening: Pack for Kuta move',
   ]},
   {title:'Sat 3 May - TRANSFER + SOUTH BALI (Heavy)', driver:true, items:[
@@ -320,15 +324,14 @@ const ITINERARY = [
     {name:'Driver',cat:'driver',idr:800000,split:'50-50',rowKey:'driver'},
   ]},
   { day:5, items:[
-    {name:'Lahangan Sweet (entry+shuttle)',cat:'activity',idr:110000,perType:'all',rowKey:'entrance'},
-    {name:'Tirta Gangga (Adult)',cat:'activity',idr:90000,perType:'adult',rowKey:'entrance'},
-    {name:'Tirta Gangga (Kid)',cat:'activity',idr:45000,perType:'kid',rowKey:'entrance'},
-    {name:'Tirta Empul (optional, Adult)',cat:'activity',idr:75000,perType:'adult',rowKey:'entrance'},
-    {name:'Tirta Empul (optional, Kid)',cat:'activity',idr:50000,perType:'kid',rowKey:'entrance'},
-    {name:'Driver',cat:'driver',idr:900000,split:'50-50',rowKey:'driver'},
+    {name:'Ayung Rafting',cat:'activity',idr:600000,perType:'all',rowKey:'rafting'},
   ]},
   { day:6, items:[
-    {name:'Ayung Rafting',cat:'activity',idr:680680,perType:'all',rowKey:'rafting'},
+    {name:'Bali Zoo (Adult)',cat:'activity',idr:350000,perType:'adult',rowKey:'entrance'},
+    {name:'Bali Zoo (Kid)',cat:'activity',idr:250000,perType:'kid',rowKey:'entrance'},
+    {name:'Ubud Palace',cat:'activity',idr:75000,perType:'all',rowKey:'entrance'},
+    {name:'Saraswati Temple',cat:'activity',idr:0,perType:'all',rowKey:'entrance'},
+    {name:'Ubud Art Market',cat:'activity',idr:0,perType:'all',rowKey:'entrance'},
   ]},
   { day:7, items:[
     {name:'Padang Padang Beach (Adult)',cat:'activity',idr:15000,perType:'adult',rowKey:'entrance'},
@@ -386,16 +389,43 @@ function defaultState(){
 
 // ===== FIREBASE SYNC =====
 let saving = false;
+let saveQueued = false;
+let saveTimer = null;
 
 function save(){
-  if(!state || saving) return;
+  if(!state) return;
   state.lastUpdated = new Date().toISOString();
+  if(saving){ saveQueued = true; return; }
+  doSave();
+}
+
+function doSave(){
   saving = true;
-  tripRef.set(state).then(() => {
+  saveQueued = false;
+  updateSyncStatus('saving');
+  // Safety timeout: if save doesn't complete in 8s, unlock and retry
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    console.warn('Save timed out, retrying...');
     saving = false;
+    updateSyncStatus('offline');
+    doSave();
+  }, 8000);
+
+  tripRef.set(state).then(() => {
+    clearTimeout(saveTimer);
+    saving = false;
+    updateSyncStatus('online');
+    if(saveQueued) doSave();
   }).catch(err => {
+    clearTimeout(saveTimer);
     console.error('Save failed:', err);
     saving = false;
+    updateSyncStatus('offline');
+    // Retry once after 2s on failure
+    setTimeout(() => {
+      if(!saving) doSave();
+    }, 2000);
   });
 }
 
@@ -405,16 +435,36 @@ async function init(){
     const doc = await tripRef.get();
     if(doc.exists){
       state = doc.data();
-      if(!state.customRows) state.customRows = [];
-      if(!state.payments) state.payments = [];
-      if(!state.splitOverrides) state.splitOverrides = {};
-      if(!state.rowLabels) state.rowLabels = {};
-      if(!state.expenses) state.expenses = [];
-      if(!state.toggledOff) state.toggledOff = [];
     } else {
-      state = defaultState();
-      await tripRef.set(state);
+      // Check if there's an old trip under a different ID (from before pinning)
+      const oldTrips = await db.collection('trips').orderBy('lastUpdated', 'desc').limit(5).get();
+      let recovered = false;
+      if(!oldTrips.empty){
+        for(const oldDoc of oldTrips.docs){
+          if(oldDoc.id === TRIP_ID) continue;
+          const oldData = oldDoc.data();
+          // Only recover if it has real expenses
+          if(oldData.expenses && oldData.expenses.length > 0){
+            if(confirm(`Found ${oldData.expenses.length} expenses under old trip ID "${oldDoc.id}". Recover this data?`)){
+              state = oldData;
+              await tripRef.set(state);
+              recovered = true;
+              break;
+            }
+          }
+        }
+      }
+      if(!recovered){
+        state = defaultState();
+        await tripRef.set(state);
+      }
     }
+    if(!state.customRows) state.customRows = [];
+    if(!state.payments) state.payments = [];
+    if(!state.splitOverrides) state.splitOverrides = {};
+    if(!state.rowLabels) state.rowLabels = {};
+    if(!state.expenses) state.expenses = [];
+    if(!state.toggledOff) state.toggledOff = [];
   } catch(err) {
     console.warn('Firestore load failed, using defaults:', err);
     state = defaultState();
@@ -472,10 +522,12 @@ async function init(){
   });
 }
 
-function updateSyncStatus(online){
+function updateSyncStatus(status){
   const dot = document.querySelector('.sync-dot');
   if(dot){
-    dot.className = 'sync-dot ' + (online ? 'online' : 'offline');
+    if(status === true || status === 'online') dot.className = 'sync-dot online';
+    else if(status === 'saving') dot.className = 'sync-dot saving';
+    else dot.className = 'sync-dot offline';
   }
 }
 
@@ -497,26 +549,26 @@ const inr = v => '\u20B9' + Math.round(v).toLocaleString('en-IN');
 const idrF = v => 'IDR ' + Math.round(v).toLocaleString('en-ID');
 const toINR = idr => idr / XR;
 
-// Get actual spend from logged expenses (variable rows only)
+// Get actual spend from logged expenses
 function getActualRowData(){
   const actual = {};
   allRows().forEach(r=>{
-    if(BOOKED_ROWS.includes(r.key)){
-      actual[r.key] = SEED_DATA[r.key] ? {...SEED_DATA[r.key]} : {A:0,B:0};
+    const rowExp = state.expenses.filter(e=>e.cat===r.key);
+    const total = rowExp.reduce((s,e)=>s+e.amount, 0);
+    // If booked row has no logged expenses, use budget data as the actual
+    if(total===0 && BOOKED_ROWS.includes(r.key)){
+      actual[r.key] = state.data[r.key] ? {...state.data[r.key]} : {A:0,B:0};
+    } else if(total===0){
+      actual[r.key] = {A:0, B:0};
     } else {
-      const rowExp = state.expenses.filter(e=>e.cat===r.key);
-      const total = rowExp.reduce((s,e)=>s+e.amount, 0);
-      if(total===0){ actual[r.key]={A:0,B:0}; }
-      else {
-        const sp = getRowSplit(r.key);
-        if(sp==='own'){
-          actual[r.key]={A:rowExp.filter(e=>e.paidBy==='A').reduce((s,e)=>s+e.amount,0),
-                         B:rowExp.filter(e=>e.paidBy==='B').reduce((s,e)=>s+e.amount,0)};
-        } else {
-          const rat = splitRatio(sp);
-          const aShare = Math.round(total * rat.A / rat.T);
-          actual[r.key] = {A:aShare, B:total-aShare};
-        }
+      const sp = getRowSplit(r.key);
+      if(sp==='own'){
+        actual[r.key]={A:rowExp.filter(e=>e.paidBy==='A').reduce((s,e)=>s+e.amount,0),
+                       B:rowExp.filter(e=>e.paidBy==='B').reduce((s,e)=>s+e.amount,0)};
+      } else {
+        const rat = splitRatio(sp);
+        const aShare = Math.round(total * rat.A / rat.T);
+        actual[r.key] = {A:aShare, B:total-aShare};
       }
     }
   });
@@ -1029,6 +1081,10 @@ function renderDays(){
     <div class="card">
       <h3>Actual Spend - ${date.slice(5)}${dayTotal>0?' - '+inr(dayTotal):''}</h3>
       ${expHTML || '<div style="font-size:.85rem;color:var(--muted);padding:4px 0">No expenses yet</div>'}
+      ${dayTotal>0?`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;border-top:2px solid var(--primary);margin-top:4px">
+        <span style="font-weight:700;font-size:.9rem">Day Total</span>
+        <span style="font-weight:700;font-size:1rem;color:var(--primary)">${inr(dayTotal)}</span>
+      </div>`:''}
       <div class="edit-only" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <select id="day-cat" onchange="toggleOtherInput()" style="flex:1;min-width:100px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem;background:#fff">${catOpts}</select>
         <input id="day-amt" type="number" inputmode="numeric" placeholder="INR" style="width:80px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:.85rem">

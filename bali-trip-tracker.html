@@ -368,12 +368,11 @@ const SEED_DATA = {
 };
 
 // ===== STATE =====
-const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','driver'];
+const BOOKED_ROWS = ['flight','visa','ubud_hotel','kuta_hotel','airport1','airport2'];
 
 let state = null;
 let currentDay = 0;
 let addCurrency = 'INR';
-let viewMode = 'budget';
 let isReady = false;
 
 function defaultState(){
@@ -575,8 +574,8 @@ function getActualRowData(){
   return actual;
 }
 
-function getDisplayData(){
-  return viewMode==='actual' ? getActualRowData() : null;
+function getLiveData(){
+  return getActualRowData();
 }
 
 function getRowTotals(data){
@@ -610,7 +609,7 @@ function switchTab(tab){
 }
 
 function updateHeader(){
-  const s = getSettlement();
+  const s = getSettlement(getLiveData());
   const el = document.getElementById('headerSettle');
   const dot = '<span class="sync-dot online"></span>';
   if(s.sT===0){ el.innerHTML=dot+'No expenses yet'; return; }
@@ -619,19 +618,16 @@ function updateHeader(){
   else el.innerHTML=dot+`You owe Sathiya ${inr(-s.balaOwes)}`;
 }
 
-function setView(mode){ viewMode=mode; renderDashboard(); }
-
 function renderDashboard(){
   updateHeader();
-  const displayData = getDisplayData();
+  const displayData = getLiveData();
   const {sA,sB,sT} = getRowTotals(displayData);
   const s = getSettlement(displayData);
-  const isActual = viewMode==='actual';
 
   let tableRows = '';
   const rows = allRows();
   rows.forEach(r=>{
-    const src = displayData ? (displayData[r.key]||{}) : (state.data[r.key]||{});
+    const src = displayData[r.key] || {A:0,B:0};
     const a = src.A || 0;
     const b = src.B || 0;
     const t = a+b;
@@ -639,8 +635,8 @@ function renderDashboard(){
     const isCustom = !ROWS.find(x=>x.key===r.key);
     const isBooked = BOOKED_ROWS.includes(r.key);
     tableRows += `
-      <tr class="${isEmpty?'empty':''} clickable" onclick="${isActual&&!isBooked?'':'editRow(\''+r.key+'\')'}">
-        <td>${rowLabel(r.key)}${isCustom?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">x</span>':''}</td>
+      <tr class="${isEmpty?'empty':''} ${isBooked?'':'clickable'}" onclick="${isBooked?'':'editRow(\''+r.key+'\')'}">
+        <td>${rowLabel(r.key)}${isBooked?'<span style="font-size:.55rem;color:var(--muted);margin-left:3px">fixed</span>':''}${isCustom?'<span style="font-size:.6rem;color:var(--muted);margin-left:4px">x</span>':''}</td>
         <td class="n a">${a?a.toLocaleString('en-IN'):''}</td>
         <td class="n b">${b?b.toLocaleString('en-IN'):''}</td>
         <td class="n t">${t?t.toLocaleString('en-IN'):''}</td>
@@ -648,10 +644,6 @@ function renderDashboard(){
   });
 
   document.getElementById('tab-dashboard').innerHTML = `
-    <div class="currency-toggle" style="margin-bottom:12px;width:100%">
-      <button style="flex:1" class="${!isActual?'active':''}" onclick="setView('budget')">Budget</button>
-      <button style="flex:1" class="${isActual?'active':''}" onclick="setView('actual')">Actual</button>
-    </div>
     <div class="card" style="overflow-x:auto">
       <table class="sheet">
         <tr>
@@ -946,8 +938,6 @@ function submitExpense(e){
   const paidBy = document.querySelector('input[name="paidBy"]:checked').value;
   const note = document.getElementById('f-note').value;
 
-  state.data[cat][paidBy] = (state.data[cat][paidBy]||0) + inrAmt;
-
   state.expenses.push({
     id: Date.now(),
     cat, amount: inrAmt, paidBy, note,
@@ -995,7 +985,6 @@ function undoExpense(id){
   const exp = state.expenses.find(e=>e.id===id);
   if(!exp) return;
   if(!confirm(`Undo ${inr(exp.amount)} from ${rowLabel(exp.cat)}?`)) return;
-  state.data[exp.cat][exp.paidBy] = Math.max(0, (state.data[exp.cat][exp.paidBy]||0) - exp.amount);
   state.expenses = state.expenses.filter(e=>e.id!==id);
   save(); renderAdd();
 }
@@ -1198,15 +1187,6 @@ function addDayExp(di){
   }
 
   if(!state.data[cat]) state.data[cat] = {A:0,B:0};
-  const sp = getRowSplit(cat);
-  if(sp === 'own'){
-    state.data[cat].A += inrAmt;
-  } else {
-    const r = splitRatio(sp);
-    const aShare = Math.round(inrAmt * r.A / r.T);
-    state.data[cat].A += aShare;
-    state.data[cat].B += (inrAmt - aShare);
-  }
   state.expenses.push({
     id: Date.now(), cat, amount: inrAmt, paidBy: dayPayer, note,
     date: DATES[di],
@@ -1219,15 +1199,6 @@ function undoDayExp(id){
   const exp = state.expenses.find(e=>e.id===id);
   if(!exp) return;
   if(!confirm(`Remove ${inr(exp.amount)}?`)) return;
-  const sp = getRowSplit(exp.cat);
-  if(sp === 'own'){
-    state.data[exp.cat].A = Math.max(0, (state.data[exp.cat].A||0) - exp.amount);
-  } else {
-    const r = splitRatio(sp);
-    const aShare = Math.round(exp.amount * r.A / r.T);
-    state.data[exp.cat].A = Math.max(0, (state.data[exp.cat].A||0) - aShare);
-    state.data[exp.cat].B = Math.max(0, (state.data[exp.cat].B||0) - (exp.amount - aShare));
-  }
   state.expenses = state.expenses.filter(e=>e.id!==id);
   save(); renderDays();
 }
@@ -1241,26 +1212,23 @@ function toggleOpt(name){
 
 function renderSettle(){
   updateHeader();
-  const s = getSettlement();
-  const {sA,sB,sT} = getRowTotals();
+  const liveData = getLiveData();
+  const s = getSettlement(liveData);
+  const {sA,sB,sT} = getRowTotals(liveData);
 
   let breakdownHTML = '';
   allRows().forEach(r=>{
-    const a = (state.data[r.key]||{}).A || 0;
-    const b = (state.data[r.key]||{}).B || 0;
+    const src = liveData[r.key] || {A:0,B:0};
+    const a = src.A || 0;
+    const b = src.B || 0;
     if(a+b === 0) return;
-    let aShare, bShare;
-    if(r.split === 'own'){
-      aShare = a; bShare = b;
-    } else {
-      aShare = (a+b)/2; bShare = (a+b)/2;
-    }
+    const sp = getRowSplit(r.key);
     breakdownHTML += `
       <tr>
         <td>${rowLabel(r.key)}</td>
-        <td class="n">${inr(aShare)}</td>
-        <td class="n">${inr(bShare)}</td>
-        <td class="n" style="font-size:.75rem;color:var(--muted)">${r.split}</td>
+        <td class="n">${inr(a)}</td>
+        <td class="n">${inr(b)}</td>
+        <td class="n" style="font-size:.75rem;color:var(--muted)">${splitLabel(sp)}</td>
       </tr>`;
   });
 
@@ -1305,15 +1273,17 @@ function renderSettle(){
 }
 
 function exportData(){
-  const s = getSettlement();
-  const {sA,sB,sT} = getRowTotals();
+  const liveData = getLiveData();
+  const s = getSettlement(liveData);
+  const {sA,sB,sT} = getRowTotals(liveData);
   let txt = 'BALI TRIP 2026 - EXPENSE REPORT\n';
   txt += '================================\n\n';
   txt += `Sathiya's share: ${inr(s.balaShare)} | Paid: ${inr(s.balaReceived)} | Owes: ${inr(s.balaOwes)}\n\n`;
   txt += 'Expense'.padEnd(22) + 'Senthil'.padStart(10) + 'Sathiya'.padStart(10) + 'Total'.padStart(10) + '\n';
   txt += '-'.repeat(52) + '\n';
   allRows().forEach(r=>{
-    const a = (state.data[r.key]||{}).A||0, b = (state.data[r.key]||{}).B||0;
+    const src = liveData[r.key]||{A:0,B:0};
+    const a = src.A||0, b = src.B||0;
     txt += rowLabel(r.key).padEnd(22) + String(a).padStart(10) + String(b).padStart(10) + String(a+b).padStart(10) + '\n';
   });
   txt += '-'.repeat(52) + '\n';
